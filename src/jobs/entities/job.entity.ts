@@ -1,8 +1,10 @@
 import {
   Column,
   Entity,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { User } from '../../users/entities/user.entity';
 
 @Entity()
 export class Job {
@@ -23,4 +25,7 @@ export class Job {
 
   @Column()
   description: string;
+
+  @ManyToOne(() => User)
+  createdBy: User;
 }

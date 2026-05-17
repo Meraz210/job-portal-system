@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 
@@ -28,8 +29,14 @@ export class JobsController {
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.EMPLOYER)
   @Post()
-  create(@Body() createJobDto: CreateJobDto) {
-    return this.jobsService.create(createJobDto);
+  create(
+    @Body() createJobDto: CreateJobDto,
+    @Req() req,
+  ) {
+    return this.jobsService.create(
+      createJobDto,
+      req.user,
+    );
   }
 
   @Get()
@@ -48,17 +55,25 @@ export class JobsController {
   update(
     @Param('id') id: string,
     @Body() updateJobDto: UpdateJobDto,
+    @Req() req,
   ) {
     return this.jobsService.update(
       +id,
       updateJobDto,
+      req.user,
     );
   }
 
   @UseGuards(JwtGuard, RolesGuard)
   @Roles(Role.EMPLOYER)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.jobsService.remove(+id);
+  remove(
+    @Param('id') id: string,
+    @Req() req,
+  ) {
+    return this.jobsService.remove(
+      +id,
+      req.user,
+    );
   }
 }

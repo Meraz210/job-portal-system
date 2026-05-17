@@ -1,4 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -13,8 +16,16 @@ export class JobsService {
     private jobRepository: Repository<Job>,
   ) {}
 
-  async create(createJobDto: CreateJobDto) {
-    const job = this.jobRepository.create(createJobDto);
+  async create(
+    createJobDto: CreateJobDto,
+    user: any,
+  ) {
+    const job = this.jobRepository.create({
+      ...createJobDto,
+      createdBy: {
+        id: user.userId,
+      },
+    });
 
     return this.jobRepository.save(job);
   }
@@ -26,13 +37,27 @@ export class JobsService {
   async findOne(id: number) {
     return this.jobRepository.findOne({
       where: { id },
+      relations: ['createdBy'],
     });
   }
 
   async update(
     id: number,
     updateJobDto: UpdateJobDto,
+    user: any,
   ) {
+    const job = await this.findOne(id);
+
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+
+    if (job.createdBy.id !== user.userId) {
+      throw new Error(
+        'You can only update your own jobs',
+      );
+    }
+
     await this.jobRepository.update(
       id,
       updateJobDto,
@@ -41,14 +66,23 @@ export class JobsService {
     return this.findOne(id);
   }
 
-  async remove(id: number) {
+  async remove(id: number, user: any) {
     const job = await this.findOne(id);
+
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+
+    if (job.createdBy.id !== user.userId) {
+      throw new Error(
+        'You can only delete your own jobs',
+      );
+    }
 
     await this.jobRepository.delete(id);
 
     return {
       message: 'Job deleted successfully',
-      job,
     };
   }
 }
