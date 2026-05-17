@@ -1,5 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
+import { Role } from '../enums/role.enum';
+
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
@@ -15,7 +17,9 @@ export class User {
   fullName: string;
 
   @Column({
-    default: 'job_seeker',
+    type: 'enum',
+    enum: Role,
+    default: Role.SEEKER,
   })
-  role: string;
+  role: Role;
 }
