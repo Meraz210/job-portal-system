@@ -15,12 +15,37 @@ import {
 import { Job } from '../jobs/entities/job.entity';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { Role } from '../users/enums/role.enum';
+import { MailService } from '../mail/mail.service';
 
 const APPLICATION_STATUSES: ApplicationStatus[] = [
   'pending',
   'accepted',
   'rejected',
 ];
+
+function sanitizeApplication(application: Application) {
+  return {
+    ...application,
+    applicant: application.applicant
+      ? {
+          id: application.applicant.id,
+          email: application.applicant.email,
+          fullName: application.applicant.fullName,
+          role: application.applicant.role,
+        }
+      : application.applicant,
+    job: application.job
+      ? {
+          id: application.job.id,
+          title: application.job.title,
+          company: application.job.company,
+          location: application.job.location,
+          salary: application.job.salary,
+          description: application.job.description,
+        }
+      : application.job,
+  };
+}
 
 @Injectable()
 export class ApplicationsService {
@@ -29,6 +54,7 @@ export class ApplicationsService {
     private applicationRepository: Repository<Application>,
     @InjectRepository(Job)
     private jobRepository: Repository<Job>,
+    private readonly mailService: MailService,
   ) {}
 
   async apply(dto: CreateApplicationDto, user: any) {
@@ -53,6 +79,7 @@ export class ApplicationsService {
 
     const job = await this.jobRepository.findOne({
       where: { id: jobId },
+      relations: ['createdBy'],
     });
 
     if (!job) {
@@ -88,9 +115,32 @@ export class ApplicationsService {
         },
       });
 
-    return this.applicationRepository.save(
+    const savedApplication =
+      await this.applicationRepository.save(
       application,
     );
+
+    const applicationWithRelations =
+      await this.applicationRepository.findOne({
+        where: { id: savedApplication.id },
+        relations: ['applicant', 'job', 'job.createdBy'],
+      });
+
+    if (applicationWithRelations?.job.createdBy?.email) {
+      await this.mailService.sendApplicationSubmittedEmail({
+        employerEmail:
+          applicationWithRelations.job.createdBy.email,
+        seekerName:
+          applicationWithRelations.applicant.fullName,
+        seekerEmail:
+          applicationWithRelations.applicant.email,
+        jobTitle: applicationWithRelations.job.title,
+      });
+    }
+
+    return applicationWithRelations
+      ? sanitizeApplication(applicationWithRelations)
+      : savedApplication;
   }
 
   async myApplications(user: any) {
@@ -194,15 +244,14 @@ export class ApplicationsService {
         application,
       );
 
-    return {
-      ...updatedApplication,
-      applicant: {
-        id: updatedApplication.applicant.id,
-        email: updatedApplication.applicant.email,
-        fullName: updatedApplication.applicant.fullName,
-        role: updatedApplication.applicant.role,
-      },
-    };
+    await this.mailService.sendApplicationStatusUpdatedEmail({
+      seekerEmail: updatedApplication.applicant.email,
+      seekerName: updatedApplication.applicant.fullName,
+      jobTitle: updatedApplication.job.title,
+      status: updatedApplication.status,
+    });
+
+    return sanitizeApplication(updatedApplication);
   }
 
   async findAll() {
