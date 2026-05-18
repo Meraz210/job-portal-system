@@ -1,15 +1,22 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import {
+  Building2,
   BriefcaseBusiness,
   ClipboardList,
+  DollarSign,
   Trash2,
   Pencil,
   Eye,
   FilePlus2,
+  LayoutDashboard,
   LogIn,
+  LogOut,
+  MapPin,
+  Search,
   Send,
   ShieldCheck,
+  UserRound,
 } from 'lucide-react';
 import './styles.css';
 
@@ -91,6 +98,19 @@ function formatApplicationDate(application) {
 
 function getApplicationStatus(application) {
   return application.status || application.applicationStatus || 'pending';
+}
+
+function getCompanyInitials(company = '') {
+  const words = company.trim().split(/\s+/).filter(Boolean);
+
+  if (words.length === 0) {
+    return 'JP';
+  }
+
+  return words
+    .slice(0, 2)
+    .map((word) => word[0].toUpperCase())
+    .join('');
 }
 
 function getStatusClass(message) {
@@ -619,54 +639,171 @@ function App() {
   if (!token || !user) {
     return (
       <main className="page-shell login-shell">
-        <section className="auth-panel login-only-panel">
-          <div className="brand-row">
+        <section className="landing-layout">
+          <div className="landing-hero">
             <div className="brand-mark">
-              <BriefcaseBusiness size={26} />
+              <BriefcaseBusiness size={28} />
             </div>
             <div>
-              <h1>Job Portal</h1>
-              <p>Login to access your dashboard.</p>
+              <p className="eyebrow">Job Portal System</p>
+              <h1>Find talent and opportunities from one focused workspace.</h1>
+              <p>
+                A role-based hiring platform for seekers and employers with job
+                search, applications, applicant review, and protected sessions.
+              </p>
+            </div>
+            <div className="hero-stats">
+              <div>
+                <strong>JWT</strong>
+                <span>Protected sessions</span>
+              </div>
+              <div>
+                <strong>2 Roles</strong>
+                <span>Seeker and employer</span>
+              </div>
+              <div>
+                <strong>Live</strong>
+                <span>Job workflows</span>
+              </div>
             </div>
           </div>
 
-          <form className="login-form" onSubmit={handleLogin}>
-            <label>
-              Email
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="meraz@gmail.com"
-                required
-              />
-            </label>
+          <div className="auth-panel login-only-panel">
+            <div className="brand-row">
+              <div className="brand-mark compact-mark">
+                <LogIn size={22} />
+              </div>
+              <div>
+                <h2>Welcome Back</h2>
+                <p>Login to access your dashboard.</p>
+              </div>
+            </div>
 
-            <label>
-              Password
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="123456"
-                required
-              />
-            </label>
+            <form className="login-form" onSubmit={handleLogin}>
+              <label>
+                Email
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="meraz@gmail.com"
+                  required
+                />
+              </label>
 
-            <button type="submit" disabled={isLoading}>
-              <LogIn size={18} />
-              {isLoading ? 'Signing in...' : 'Login'}
-            </button>
-          </form>
+              <label>
+                Password
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="123456"
+                  required
+                />
+              </label>
 
-          {status && <p className={getStatusClass(status)}>{status}</p>}
+              <button type="submit" disabled={isLoading}>
+                <LogIn size={18} />
+                {isLoading ? 'Signing in...' : 'Login'}
+              </button>
+            </form>
+
+            {status && <p className={getStatusClass(status)}>{status}</p>}
+          </div>
         </section>
       </main>
     );
   }
 
   return (
-    <main className="page-shell">
+    <main className="app-shell">
+      <aside className="app-sidebar">
+        <div className="sidebar-brand">
+          <div className="brand-mark compact-mark">
+            <BriefcaseBusiness size={22} />
+          </div>
+          <div>
+            <strong>Job Portal</strong>
+            <span>{role === 'employer' ? 'Employer' : 'Seeker'} Workspace</span>
+          </div>
+        </div>
+
+        <nav className="sidebar-nav" aria-label="Dashboard sections">
+          <a href="#jobs">
+            <BriefcaseBusiness size={18} />
+            Jobs
+          </a>
+          {role === 'seeker' && (
+            <a href="#applications">
+              <ClipboardList size={18} />
+              My Applications
+            </a>
+          )}
+          {role === 'employer' && (
+            <>
+              <a href="#employer-dashboard">
+                <LayoutDashboard size={18} />
+                Employer Dashboard
+              </a>
+              <a href="#applicants">
+                <Eye size={18} />
+                Applicants
+              </a>
+            </>
+          )}
+        </nav>
+      </aside>
+
+      <section className="app-main">
+        <header className="app-topbar">
+          <div>
+            <p className="eyebrow">Dashboard</p>
+            <h1>{role === 'employer' ? 'Employer Console' : 'Job Seeker Hub'}</h1>
+          </div>
+          <div className="profile-card">
+            <div className="profile-avatar">
+              <UserRound size={20} />
+            </div>
+            <div>
+              <strong>{user.email}</strong>
+              <span>{user.role}</span>
+            </div>
+            <button className="secondary-button logout-button" onClick={handleLogout}>
+              <LogOut size={18} />
+              Logout
+            </button>
+          </div>
+        </header>
+
+        <section className="dashboard-hero">
+          <div>
+            <p className="eyebrow">Active Portal</p>
+            <h2>
+              {role === 'employer'
+                ? 'Manage postings, applicants, and hiring decisions.'
+                : 'Search jobs, apply faster, and track every application.'}
+            </h2>
+          </div>
+          <div className="portal-summary hero-summary">
+            <div>
+              <span>Available Jobs</span>
+              <strong>{jobs.length}</strong>
+            </div>
+            {role === 'seeker' && (
+              <div>
+                <span>My Applications</span>
+                <strong>{applications.length}</strong>
+              </div>
+            )}
+            {role === 'employer' && (
+              <div>
+                <span>Posted Jobs</span>
+                <strong>{employerJobs.length}</strong>
+              </div>
+            )}
+          </div>
+        </section>
+
       <section className="top-grid">
         <div className="auth-panel">
           <div className="brand-row">
@@ -736,7 +873,7 @@ function App() {
       </section>
 
       {role === 'employer' && (
-        <section className="employer-dashboard">
+        <section className="employer-dashboard" id="employer-dashboard">
           <div className="dashboard-header">
             <div>
               <h2>Employer Dashboard</h2>
@@ -874,7 +1011,7 @@ function App() {
         </section>
       )}
 
-      <section className="jobs-layout">
+      <section className="jobs-layout" id="jobs">
         <div className="jobs-header">
           <div>
             <h2>Jobs</h2>
@@ -894,33 +1031,42 @@ function App() {
         <div className="job-filter-panel">
           <label>
             Search
-            <input
-              value={jobFilters.search}
-              onChange={(event) =>
-                updateJobFilter('search', event.target.value)
-              }
-              placeholder="Title, company, location, or description"
-            />
+            <div className="input-with-icon">
+              <Search size={18} />
+              <input
+                value={jobFilters.search}
+                onChange={(event) =>
+                  updateJobFilter('search', event.target.value)
+                }
+                placeholder="Title, company, location, or description"
+              />
+            </div>
           </label>
           <label>
             Location
-            <input
-              value={jobFilters.location}
-              onChange={(event) =>
-                updateJobFilter('location', event.target.value)
-              }
-              placeholder="Dhaka"
-            />
+            <div className="input-with-icon">
+              <MapPin size={18} />
+              <input
+                value={jobFilters.location}
+                onChange={(event) =>
+                  updateJobFilter('location', event.target.value)
+                }
+                placeholder="Dhaka"
+              />
+            </div>
           </label>
           <label>
             Company
-            <input
-              value={jobFilters.company}
-              onChange={(event) =>
-                updateJobFilter('company', event.target.value)
-              }
-              placeholder="Company name"
-            />
+            <div className="input-with-icon">
+              <Building2 size={18} />
+              <input
+                value={jobFilters.company}
+                onChange={(event) =>
+                  updateJobFilter('company', event.target.value)
+                }
+                placeholder="Company name"
+              />
+            </div>
           </label>
           <button
             className="secondary-button"
@@ -938,9 +1084,24 @@ function App() {
         <div className="job-grid">
           {jobs.map((job) => (
             <article className="job-card" key={job.id}>
-              <div>
-                <h3>{job.title}</h3>
-                <p>{job.company}</p>
+              <div className="job-card-header">
+                <div className="company-logo" aria-hidden="true">
+                  {getCompanyInitials(job.company)}
+                </div>
+                <div>
+                  <h3>{job.title}</h3>
+                  <p>{job.company}</p>
+                </div>
+              </div>
+              <div className="job-badges">
+                <span>
+                  <MapPin size={14} />
+                  {job.location}
+                </span>
+                <span>
+                  <DollarSign size={14} />
+                  {job.salary}
+                </span>
               </div>
               <dl>
                 <div>
@@ -977,7 +1138,7 @@ function App() {
         )}
 
         {selectedApplicants && (
-          <div className="applicants-panel">
+          <div className="applicants-panel" id="applicants">
             <div className="panel-header compact">
               <Eye size={20} />
               <h2>Applicants for Job #{selectedApplicants.jobId}</h2>
@@ -1044,7 +1205,7 @@ function App() {
       </section>
 
       {role === 'seeker' && (
-        <section className="applications-section">
+        <section className="applications-section" id="applications">
           <div className="jobs-header">
             <div>
               <h2>My Applications</h2>
@@ -1108,6 +1269,7 @@ function App() {
           )}
         </section>
       )}
+      </section>
     </main>
   );
 }
