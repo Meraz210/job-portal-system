@@ -113,6 +113,20 @@ function getCompanyInitials(company = '') {
     .join('');
 }
 
+function getJobImage(job) {
+  const text = `${job.title || ''} ${job.description || ''}`.toLowerCase();
+
+  if (text.includes('react')) {
+    return '/images/react-developer.png';
+  }
+
+  if (text.includes('backend') || text.includes('back-end')) {
+    return '/images/backend-developer.png';
+  }
+
+  return '/images/frontend-developer.png';
+}
+
 function getStatusClass(message) {
   const normalized = message.toLowerCase();
 
@@ -916,6 +930,11 @@ function App() {
                 <div className="posted-job-list">
                   {employerJobs.map((job) => (
                     <article className="posted-job-card" key={job.id}>
+                      <img
+                        className="job-card-image"
+                        src={getJobImage(job)}
+                        alt={`${job.title} role`}
+                      />
                       <div className="posted-job-heading">
                         <div>
                           <h3>{job.title}</h3>
@@ -1084,6 +1103,11 @@ function App() {
         <div className="job-grid">
           {jobs.map((job) => (
             <article className="job-card" key={job.id}>
+              <img
+                className="job-card-image"
+                src={getJobImage(job)}
+                alt={`${job.title} role`}
+              />
               <div className="job-card-header">
                 <div className="company-logo" aria-hidden="true">
                   {getCompanyInitials(job.company)}
