@@ -12,7 +12,7 @@ A full-stack job portal application with JWT authentication, role-based access, 
 ## Features
 
 - User registration and login
-- Role-based access for job seekers and employers
+- Role-based access for job seekers, employers, and admins
 - Protected frontend session with logout
 - Job create, list, search, and filter
 - Job edit and delete for employers
@@ -20,6 +20,7 @@ A full-stack job portal application with JWT authentication, role-based access, 
 - My Applications section for seekers
 - Employer applicants view
 - Application status update: pending, accepted, rejected
+- Admin dashboard for managing users, jobs, and applications
 
 ## Folder Structure
 
@@ -38,6 +39,26 @@ cd backend
 npm install
 npm run start:dev
 ```
+
+## Development Admin Account
+
+Create or reset the development admin account with:
+
+```bash
+cd backend
+npm run seed:admin
+```
+
+Default development admin credentials:
+
+```text
+email: admin@gmail.com
+password: 123456
+role: admin
+fullName: Admin User
+```
+
+This is a local development seed script, not a public admin registration endpoint.
 
 ## Frontend Setup
 
