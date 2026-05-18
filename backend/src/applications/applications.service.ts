@@ -8,10 +8,19 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { Application } from './entities/application.entity';
+import {
+  Application,
+  ApplicationStatus,
+} from './entities/application.entity';
 import { Job } from '../jobs/entities/job.entity';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { Role } from '../users/enums/role.enum';
+
+const APPLICATION_STATUSES: ApplicationStatus[] = [
+  'pending',
+  'accepted',
+  'rejected',
+];
 
 @Injectable()
 export class ApplicationsService {
@@ -137,6 +146,63 @@ export class ApplicationsService {
         role: application.applicant.role,
       },
     }));
+  }
+
+  async updateStatus(
+    id: number,
+    status: string,
+    user: any,
+  ) {
+    if (user.role !== Role.EMPLOYER) {
+      throw new ForbiddenException(
+        'Only employers can update application status',
+      );
+    }
+
+    if (
+      !APPLICATION_STATUSES.includes(
+        status as ApplicationStatus,
+      )
+    ) {
+      throw new BadRequestException(
+        'Status must be pending, accepted, or rejected',
+      );
+    }
+
+    const application =
+      await this.applicationRepository.findOne({
+        where: { id },
+        relations: ['applicant', 'job', 'job.createdBy'],
+      });
+
+    if (!application) {
+      throw new NotFoundException(
+        'Application not found',
+      );
+    }
+
+    if (application.job.createdBy.id !== user.userId) {
+      throw new ForbiddenException(
+        'You can only update applications for your own jobs',
+      );
+    }
+
+    application.status = status as ApplicationStatus;
+
+    const updatedApplication =
+      await this.applicationRepository.save(
+        application,
+      );
+
+    return {
+      ...updatedApplication,
+      applicant: {
+        id: updatedApplication.applicant.id,
+        email: updatedApplication.applicant.email,
+        fullName: updatedApplication.applicant.fullName,
+        role: updatedApplication.applicant.role,
+      },
+    };
   }
 
   async findAll() {

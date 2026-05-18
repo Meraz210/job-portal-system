@@ -15,6 +15,7 @@ body {
 
 button,
 input,
+select,
 textarea {
   font: inherit;
 }
@@ -114,6 +115,7 @@ label {
 }
 
 input,
+select,
 textarea {
   width: 100%;
   min-height: 46px;
@@ -131,6 +133,7 @@ textarea {
 }
 
 input:focus,
+select:focus,
 textarea:focus {
   border-color: #0f766e;
   outline: 3px solid rgba(15, 118, 110, 0.16);
@@ -448,6 +451,16 @@ button:disabled {
 .applicant-row span {
   color: #5f6f7c;
   overflow-wrap: anywhere;
+}
+
+.status-select {
+  min-height: 38px;
+  padding: 0 10px;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1d2730;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 @media (max-width: 780px) {

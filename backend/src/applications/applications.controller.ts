@@ -7,6 +7,7 @@ import {
   Req,
   UseGuards,
   Get,
+  Patch,
 } from '@nestjs/common';
 
 import { ApplicationsService } from './applications.service';
@@ -57,6 +58,19 @@ export class ApplicationsController {
   ) {
     return this.applicationsService.getApplicationsForJob(
       jobId,
+      req.user,
+    );
+  }
+
+  @Patch(':id/status')
+  updateStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('status') status: string,
+    @Req() req,
+  ) {
+    return this.applicationsService.updateStatus(
+      id,
+      status,
       req.user,
     );
   }

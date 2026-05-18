@@ -14,6 +14,7 @@ import {
 import './styles.css';
 
 const API_URL = 'http://localhost:8000';
+const APPLICATION_STATUSES = ['pending', 'accepted', 'rejected'];
 
 function decodeJwt(token) {
   try {
@@ -75,7 +76,7 @@ function formatApplicationDate(application) {
 }
 
 function getApplicationStatus(application) {
-  return application.status || application.applicationStatus || 'Not available';
+  return application.status || application.applicationStatus || 'pending';
 }
 
 function App() {
@@ -378,6 +379,40 @@ function App() {
       setApplicantsStatus(error.message);
     } finally {
       setIsApplicantsLoading(false);
+    }
+  }
+
+  async function handleUpdateApplicationStatus(application, nextStatus) {
+    if (role !== 'employer') {
+      return;
+    }
+
+    setApplicantsStatus('');
+
+    try {
+      const response = await fetch(
+        `${API_URL}/applications/${application.id}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: nextStatus }),
+        },
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not update application status');
+      }
+
+      if (selectedApplicants?.jobId) {
+        await handleViewApplicants(selectedApplicants.jobId);
+      }
+      setApplicantsStatus('Application status updated.');
+    } catch (error) {
+      setApplicantsStatus(error.message);
     }
   }
 
@@ -732,7 +767,23 @@ function App() {
                     <span>{application.applicant?.email || 'No email'}</span>
                     <span>{application.applicant?.role || 'seeker'}</span>
                     <span>{formatApplicationDate(application)}</span>
-                    <span>{getApplicationStatus(application)}</span>
+                    <select
+                      className="status-select"
+                      value={getApplicationStatus(application)}
+                      onChange={(event) =>
+                        handleUpdateApplicationStatus(
+                          application,
+                          event.target.value,
+                        )
+                      }
+                    >
+                      {APPLICATION_STATUSES.map((statusOption) => (
+                        <option key={statusOption} value={statusOption}>
+                          {statusOption[0].toUpperCase() +
+                            statusOption.slice(1)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 ))}
               </div>
