@@ -27,6 +27,24 @@ export class Application {
   })
   status: ApplicationStatus;
 
+  @Column({
+    type: 'varchar',
+    nullable: true,
+  })
+  cvUrl: string | null;
+
+  @Column({
+    type: 'text',
+    nullable: true,
+  })
+  coverLetter: string | null;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+  })
+  portfolioUrl: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -47,7 +47,7 @@ export class JobsService {
 
     if (search) {
       query.andWhere(
-        '(LOWER(job.title) LIKE :search OR LOWER(job.company) LIKE :search OR LOWER(job.description) LIKE :search OR LOWER(job.location) LIKE :search)',
+        '(LOWER(job.title) LIKE :search OR LOWER(job.company) LIKE :search OR LOWER(job.description) LIKE :search OR LOWER(job.location) LIKE :search OR LOWER(COALESCE(job.skills, \'\')) LIKE :search OR LOWER(COALESCE(job.experience, \'\')) LIKE :search)',
         { search: `%${search.toLowerCase()}%` },
       );
     }

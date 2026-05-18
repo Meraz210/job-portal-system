@@ -321,13 +321,15 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  min-width: min(560px, 100%);
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 42px rgba(18, 38, 54, 0.09);
+  gap: 16px;
+  min-width: min(635px, 100%);
+  padding: 12px;
+  border: 1px solid rgba(203, 213, 225, 0.86);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 252, 0.94)),
+    #ffffff;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.1);
   backdrop-filter: blur(14px);
 }
 
@@ -339,6 +341,7 @@ textarea:focus-visible {
 }
 
 .profile-identity {
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -347,26 +350,43 @@ textarea:focus-visible {
 }
 
 .profile-identity strong {
-  max-width: 220px;
+  max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: #0f172a;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.profile-identity span {
+  width: fit-content;
+  margin-top: 4px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: capitalize;
 }
 
 .profile-actions {
+  flex: 0 0 auto;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
 .profile-avatar {
-  width: 52px;
-  min-width: 52px;
-  height: 52px;
+  width: 58px;
+  min-width: 58px;
+  height: 58px;
   display: grid;
   place-items: center;
-  border-radius: 14px;
+  border-radius: 16px;
   color: var(--primary-dark);
   background: var(--primary-soft);
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.12);
   overflow: hidden;
 }
 
@@ -378,21 +398,34 @@ textarea:focus-visible {
 }
 
 .logout-button {
-  min-height: 38px;
+  min-height: 42px;
+  padding: 0 15px;
+  border-radius: 12px;
 }
 
 .avatar-upload-button {
-  min-height: 38px;
+  min-height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  padding: 0 12px;
+  gap: 7px;
+  border-radius: 12px;
+  padding: 0 15px;
   color: #ffffff;
   background: var(--primary);
   cursor: pointer;
   font-size: 13px;
   font-weight: 900;
+  box-shadow: 0 10px 20px rgba(15, 118, 110, 0.16);
+  transition:
+    background 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.avatar-upload-button:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
 }
 
 .avatar-upload-button input {
@@ -400,8 +433,9 @@ textarea:focus-visible {
 }
 
 .avatar-remove-button {
-  min-height: 38px;
-  padding: 0 12px;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
   font-size: 13px;
 }
 
@@ -842,6 +876,71 @@ button:disabled {
   background: var(--surface-muted);
   line-height: 1.6;
   text-align: center;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(8px);
+}
+
+.apply-modal {
+  width: min(620px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 28px 80px rgba(2, 6, 23, 0.24);
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e5ebef;
+}
+
+.modal-header h2 {
+  margin-top: 4px;
+  font-size: 26px;
+}
+
+.modal-header span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.apply-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.apply-form input[type="file"] {
+  padding: 12px;
+  cursor: pointer;
+}
+
+.field-hint {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.modal-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
 }
 
 .jobs-header {
@@ -1580,6 +1679,43 @@ button:disabled {
   color: #40515f;
 }
 
+.job-extra-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.job-extra-grid span {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 999px;
+  color: #344554;
+  background: #eef4f6;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.job-info-block {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid #e1ebef;
+  border-radius: 12px;
+  background: #f8fbfc;
+}
+
+.job-info-block strong {
+  color: #344554;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.job-info-block p {
+  line-height: 1.5;
+}
+
 .application-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1652,7 +1788,7 @@ button:disabled {
   display: grid;
   grid-template-columns:
     minmax(120px, 1.1fr) minmax(160px, 1.4fr) minmax(80px, 0.7fr)
-    minmax(140px, 1fr) minmax(110px, 0.8fr);
+    minmax(140px, 1fr) minmax(110px, 0.8fr) minmax(130px, 0.9fr);
   gap: 12px;
   align-items: center;
 }
@@ -1675,6 +1811,34 @@ button:disabled {
 .applicant-row span {
   color: var(--muted);
   overflow-wrap: anywhere;
+}
+
+.cv-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.cv-actions a {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 999px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  font-size: 12px;
+  font-weight: 900;
+  text-decoration: none;
+  transition:
+    background 140ms ease,
+    transform 140ms ease;
+}
+
+.cv-actions a:hover {
+  background: #ccebe5;
+  transform: translateY(-1px);
 }
 
 .status-select {
@@ -1748,7 +1912,7 @@ button:disabled {
 
   .applicant-table-head,
   .applicant-row {
-    min-width: 760px;
+    min-width: 940px;
   }
 }
 
@@ -1817,6 +1981,10 @@ button:disabled {
     justify-content: space-between;
   }
 
+  .profile-identity strong {
+    max-width: min(360px, 100%);
+  }
+
   .application-card-header {
     grid-template-columns: auto minmax(0, 1fr);
   }
@@ -1828,6 +1996,10 @@ button:disabled {
   .app-footer {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .modal-actions {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1889,6 +2061,12 @@ button:disabled {
 
   .profile-identity strong {
     max-width: 100%;
+  }
+
+  .avatar-upload-button,
+  .avatar-remove-button,
+  .logout-button {
+    width: 100%;
   }
 
   .admin-summary-grid,

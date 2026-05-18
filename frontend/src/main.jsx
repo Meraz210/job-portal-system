@@ -27,6 +27,20 @@ import './styles.css';
 
 const API_URL = 'http://localhost:8000';
 const APPLICATION_STATUSES = ['pending', 'accepted', 'rejected'];
+const emptyJobForm = {
+  title: '',
+  company: '',
+  location: '',
+  salary: '',
+  description: '',
+  educationRequirement: '',
+  experience: '',
+  jobType: '',
+  skills: '',
+  deadline: '',
+  vacancy: '',
+  workplaceType: '',
+};
 
 function decodeJwt(token) {
   try {
@@ -103,6 +117,20 @@ function formatApplicationDate(application) {
 
 function getApplicationStatus(application) {
   return application.status || application.applicationStatus || 'pending';
+}
+
+function getCvUrl(application) {
+  const cvPath = application.cvUrl || application.cvPath;
+
+  if (!cvPath) {
+    return null;
+  }
+
+  if (cvPath.startsWith('http')) {
+    return cvPath;
+  }
+
+  return `${API_URL}/${cvPath.replace(/^\/+/, '')}`;
 }
 
 function getCompanyInitials(company = '') {
@@ -225,17 +253,17 @@ function App() {
   const [isApplicationsLoading, setIsApplicationsLoading] =
     React.useState(false);
   const [applyingJobId, setApplyingJobId] = React.useState(null);
+  const [applyModalJob, setApplyModalJob] = React.useState(null);
+  const [applicationForm, setApplicationForm] = React.useState({
+    cv: null,
+    coverLetter: '',
+    portfolioUrl: '',
+  });
   const [selectedApplicants, setSelectedApplicants] = React.useState(null);
   const [applicantsStatus, setApplicantsStatus] = React.useState('');
   const [isApplicantsLoading, setIsApplicantsLoading] = React.useState(false);
   const [editingJobId, setEditingJobId] = React.useState(null);
-  const [jobForm, setJobForm] = React.useState({
-    title: '',
-    company: '',
-    location: '',
-    salary: '',
-    description: '',
-  });
+  const [jobForm, setJobForm] = React.useState(emptyJobForm);
 
   const user = token ? decodeJwt(token) : null;
   const role = user?.role;
@@ -620,32 +648,84 @@ function App() {
       location: job.location || '',
       salary: job.salary || '',
       description: job.description || '',
+      educationRequirement: job.educationRequirement || '',
+      experience: job.experience || '',
+      jobType: job.jobType || '',
+      skills: job.skills || '',
+      deadline: job.deadline || '',
+      vacancy: job.vacancy || '',
+      workplaceType: job.workplaceType || '',
     });
   }
 
   function resetJobForm() {
     setEditingJobId(null);
-    setJobForm({
-      title: '',
-      company: '',
-      location: '',
-      salary: '',
-      description: '',
+    setJobForm(emptyJobForm);
+  }
+
+  function openApplyModal(job) {
+    setJobsStatus('');
+    setApplyModalJob(job);
+    setApplicationForm({
+      cv: null,
+      coverLetter: '',
+      portfolioUrl: '',
     });
   }
 
-  async function handleApply(jobId) {
+  function closeApplyModal() {
+    if (applyingJobId) {
+      return;
+    }
+
+    setApplyModalJob(null);
+    setApplicationForm({
+      cv: null,
+      coverLetter: '',
+      portfolioUrl: '',
+    });
+  }
+
+  async function handleApply(event) {
+    event.preventDefault();
+
+    if (!applyModalJob) {
+      return;
+    }
+
+    if (!applicationForm.cv) {
+      setJobsStatus('Please upload your CV before applying.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('jobId', String(applyModalJob.id));
+    formData.append('cv', applicationForm.cv);
+
+    if (applicationForm.coverLetter.trim()) {
+      formData.append(
+        'coverLetter',
+        applicationForm.coverLetter.trim(),
+      );
+    }
+
+    if (applicationForm.portfolioUrl.trim()) {
+      formData.append(
+        'portfolioUrl',
+        applicationForm.portfolioUrl.trim(),
+      );
+    }
+
     setJobsStatus('');
-    setApplyingJobId(jobId);
+    setApplyingJobId(applyModalJob.id);
 
     try {
       const response = await fetch(`${API_URL}/applications`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ jobId }),
+        body: formData,
       });
       const data = await response.json();
 
@@ -659,6 +739,12 @@ function App() {
       }
 
       setJobsStatus('Application submitted.');
+      setApplyModalJob(null);
+      setApplicationForm({
+        cv: null,
+        coverLetter: '',
+        portfolioUrl: '',
+      });
       await loadMyApplications();
     } catch (error) {
       setJobsStatus(error.message);
@@ -979,6 +1065,11 @@ function App() {
     { name: 'company', label: 'Company', icon: Building2 },
     { name: 'location', label: 'Location', icon: MapPin },
     { name: 'salary', label: 'Salary', icon: DollarSign },
+    { name: 'experience', label: 'Experience', icon: BriefcaseBusiness },
+    { name: 'jobType', label: 'Job Type', icon: ClipboardList },
+    { name: 'deadline', label: 'Deadline', icon: CalendarDays },
+    { name: 'vacancy', label: 'Vacancy', icon: Users },
+    { name: 'workplaceType', label: 'Workplace Type', icon: Building2 },
   ];
 
   if (!token || !user) {
@@ -1201,7 +1292,8 @@ function App() {
             </div>
             <div className="profile-actions">
               <label className="avatar-upload-button">
-                Change Photo
+                <UserRound size={16} />
+                Photo
                 <input
                   type="file"
                   accept="image/*"
@@ -1214,6 +1306,7 @@ function App() {
                   type="button"
                   onClick={removeProfileImage}
                 >
+                  <Trash2 size={16} />
                   Remove
                 </button>
               )}
@@ -1775,6 +1868,29 @@ function App() {
                           <dd>{formatSalary(job.salary)}</dd>
                         </div>
                       </dl>
+                      <div className="job-extra-grid">
+                        {job.experience && (
+                          <span>Experience: {job.experience}</span>
+                        )}
+                        {job.jobType && <span>Type: {job.jobType}</span>}
+                        {job.workplaceType && (
+                          <span>Workplace: {job.workplaceType}</span>
+                        )}
+                        {job.vacancy && <span>Vacancy: {job.vacancy}</span>}
+                        {job.deadline && <span>Deadline: {job.deadline}</span>}
+                      </div>
+                      {job.educationRequirement && (
+                        <div className="job-info-block">
+                          <strong>Education</strong>
+                          <p>{job.educationRequirement}</p>
+                        </div>
+                      )}
+                      {job.skills && (
+                        <div className="job-info-block">
+                          <strong>Skills</strong>
+                          <p>{job.skills}</p>
+                        </div>
+                      )}
                       <p className="job-description">{job.description}</p>
                     </article>
                   ))}
@@ -1808,9 +1924,13 @@ function App() {
                           placeholder={
                             field.name === 'salary'
                               ? 'Example: 50000 - 80000'
+                              : field.name === 'deadline'
+                                ? 'Example: 2026-06-30'
                               : field.label
                           }
-                          required
+                          required={['title', 'company', 'location', 'salary'].includes(
+                            field.name,
+                          )}
                         />
                       </div>
                     </label>
@@ -1828,6 +1948,32 @@ function App() {
                     }
                     placeholder="Write a clear role summary, requirements, and responsibilities."
                     required
+                  />
+                </label>
+                <label className="wide-field">
+                  Education Requirement
+                  <textarea
+                    value={jobForm.educationRequirement}
+                    onChange={(event) =>
+                      setJobForm({
+                        ...jobForm,
+                        educationRequirement: event.target.value,
+                      })
+                    }
+                    placeholder="Example: Bachelor degree in Computer Science or related field."
+                  />
+                </label>
+                <label className="wide-field">
+                  Skills
+                  <textarea
+                    value={jobForm.skills}
+                    onChange={(event) =>
+                      setJobForm({
+                        ...jobForm,
+                        skills: event.target.value,
+                      })
+                    }
+                    placeholder="Example: React, Node.js, PostgreSQL, communication."
                   />
                 </label>
                 <button type="submit">
@@ -1919,6 +2065,98 @@ function App() {
           <p className={getStatusClass(jobsStatus)}>{jobsStatus}</p>
         )}
 
+        {applyModalJob && (
+          <div className="modal-backdrop" role="presentation">
+            <section
+              className="apply-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="apply-modal-title"
+            >
+              <div className="modal-header">
+                <div>
+                  <p className="eyebrow">Job Application</p>
+                  <h2 id="apply-modal-title">{applyModalJob.title}</h2>
+                  <span>{applyModalJob.company}</span>
+                </div>
+                <button
+                  className="secondary-button icon-button"
+                  type="button"
+                  onClick={closeApplyModal}
+                  aria-label="Close application form"
+                  disabled={Boolean(applyingJobId)}
+                >
+                  x
+                </button>
+              </div>
+
+              <form className="apply-form" onSubmit={handleApply}>
+                <label>
+                  Upload CV
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    onChange={(event) =>
+                      setApplicationForm({
+                        ...applicationForm,
+                        cv: event.target.files?.[0] || null,
+                      })
+                    }
+                    required
+                  />
+                  <span className="field-hint">
+                    PDF, DOC, or DOCX. Maximum size: 5MB.
+                  </span>
+                </label>
+
+                <label>
+                  Cover Letter
+                  <textarea
+                    value={applicationForm.coverLetter}
+                    onChange={(event) =>
+                      setApplicationForm({
+                        ...applicationForm,
+                        coverLetter: event.target.value,
+                      })
+                    }
+                    placeholder="Optional short note for the employer."
+                  />
+                </label>
+
+                <label>
+                  Portfolio Link
+                  <input
+                    type="url"
+                    value={applicationForm.portfolioUrl}
+                    onChange={(event) =>
+                      setApplicationForm({
+                        ...applicationForm,
+                        portfolioUrl: event.target.value,
+                      })
+                    }
+                    placeholder="https://your-portfolio.com"
+                  />
+                </label>
+
+                <div className="modal-actions">
+                  <button type="submit" disabled={Boolean(applyingJobId)}>
+                    <Send size={18} />
+                    {applyingJobId ? 'Submitting...' : 'Submit Application'}
+                  </button>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={closeApplyModal}
+                    disabled={Boolean(applyingJobId)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>
+        )}
+
         <div className="job-grid">
           {jobs.map((job) => (
             <article className="job-card" key={job.id}>
@@ -1956,6 +2194,27 @@ function App() {
                   <dd>{formatSalary(job.salary)}</dd>
                 </div>
               </dl>
+              <div className="job-extra-grid">
+                {job.experience && <span>Experience: {job.experience}</span>}
+                {job.jobType && <span>Type: {job.jobType}</span>}
+                {job.workplaceType && (
+                  <span>Workplace: {job.workplaceType}</span>
+                )}
+                {job.vacancy && <span>Vacancy: {job.vacancy}</span>}
+                {job.deadline && <span>Deadline: {job.deadline}</span>}
+              </div>
+              {job.educationRequirement && (
+                <div className="job-info-block">
+                  <strong>Education</strong>
+                  <p>{job.educationRequirement}</p>
+                </div>
+              )}
+              {job.skills && (
+                <div className="job-info-block">
+                  <strong>Skills</strong>
+                  <p>{job.skills}</p>
+                </div>
+              )}
               <p className="job-description">{job.description}</p>
               {role === 'seeker' && (
                 <div className="apply-action">
@@ -1963,7 +2222,7 @@ function App() {
                     <span className="applied-badge">Applied</span>
                   )}
                   <button
-                    onClick={() => handleApply(job.id)}
+                    onClick={() => openApplyModal(job)}
                     disabled={
                       applyingJobId === job.id || appliedJobIds.has(job.id)
                     }
@@ -2021,34 +2280,53 @@ function App() {
                   <span>Role</span>
                   <span>Applied Date</span>
                   <span>Status</span>
+                  <span>CV</span>
                 </div>
-                {selectedApplicants.applicants.map((application) => (
-                  <div className="applicant-row" key={application.id}>
-                    <strong>
-                      {application.applicant?.fullName || 'Unknown applicant'}
-                    </strong>
-                    <span>{application.applicant?.email || 'No email'}</span>
-                    <span>{application.applicant?.role || 'seeker'}</span>
-                    <span>{formatApplicationDate(application)}</span>
-                    <select
-                      className="status-select"
-                      value={getApplicationStatus(application)}
-                      onChange={(event) =>
-                        handleUpdateApplicationStatus(
-                          application,
-                          event.target.value,
-                        )
-                      }
-                    >
-                      {APPLICATION_STATUSES.map((statusOption) => (
-                        <option key={statusOption} value={statusOption}>
-                          {statusOption[0].toUpperCase() +
-                            statusOption.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ))}
+                {selectedApplicants.applicants.map((application) => {
+                  const cvUrl = getCvUrl(application);
+
+                  return (
+                    <div className="applicant-row" key={application.id}>
+                      <strong>
+                        {application.applicant?.fullName || 'Unknown applicant'}
+                      </strong>
+                      <span>{application.applicant?.email || 'No email'}</span>
+                      <span>{application.applicant?.role || 'seeker'}</span>
+                      <span>{formatApplicationDate(application)}</span>
+                      <select
+                        className="status-select"
+                        value={getApplicationStatus(application)}
+                        onChange={(event) =>
+                          handleUpdateApplicationStatus(
+                            application,
+                            event.target.value,
+                          )
+                        }
+                      >
+                        {APPLICATION_STATUSES.map((statusOption) => (
+                          <option key={statusOption} value={statusOption}>
+                            {statusOption[0].toUpperCase() +
+                              statusOption.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="cv-actions">
+                        {cvUrl ? (
+                          <>
+                            <a href={cvUrl} target="_blank" rel="noreferrer">
+                              View CV
+                            </a>
+                            <a href={cvUrl} download>
+                              Download CV
+                            </a>
+                          </>
+                        ) : (
+                          <span>No CV</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : null}
 

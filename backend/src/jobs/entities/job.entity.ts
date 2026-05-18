@@ -26,6 +26,48 @@ export class Job {
   @Column()
   description: string;
 
+  @Column({
+    type: 'text',
+    nullable: true,
+  })
+  educationRequirement: string | null;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+  })
+  experience: string | null;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+  })
+  jobType: string | null;
+
+  @Column({
+    type: 'text',
+    nullable: true,
+  })
+  skills: string | null;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+  })
+  deadline: string | null;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+  })
+  vacancy: string | null;
+
+  @Column({
+    type: 'varchar',
+    nullable: true,
+  })
+  workplaceType: string | null;
+
   @ManyToOne(() => User)
   createdBy: User;
 }

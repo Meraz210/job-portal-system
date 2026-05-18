@@ -22,6 +22,12 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Uploaded files
+backend/uploads/*
+!backend/uploads/cv/
+backend/uploads/cv/*
+!backend/uploads/cv/.gitkeep
+
 # Editors
 .vscode/
 .idea/
@@ -43,4 +49,3 @@ System Volume Information/
 *.crdownload
 .tmp/
 .temp/
-

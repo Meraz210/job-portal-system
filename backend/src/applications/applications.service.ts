@@ -42,9 +42,25 @@ function sanitizeApplication(application: Application) {
           location: application.job.location,
           salary: application.job.salary,
           description: application.job.description,
+          educationRequirement:
+            application.job.educationRequirement,
+          experience: application.job.experience,
+          jobType: application.job.jobType,
+          skills: application.job.skills,
+          deadline: application.job.deadline,
+          vacancy: application.job.vacancy,
+          workplaceType: application.job.workplaceType,
         }
       : application.job,
   };
+}
+
+function getCvUrl(cv?: Express.Multer.File) {
+  if (!cv) {
+    return null;
+  }
+
+  return `uploads/cv/${cv.filename}`;
 }
 
 @Injectable()
@@ -57,23 +73,35 @@ export class ApplicationsService {
     private readonly mailService: MailService,
   ) {}
 
-  async apply(dto: CreateApplicationDto, user: any) {
+  async apply(
+    dto: CreateApplicationDto,
+    user: any,
+    cv?: Express.Multer.File,
+  ) {
     if (user.role !== Role.SEEKER) {
       throw new ForbiddenException(
         'Only seekers can apply for jobs',
       );
     }
 
-    return this.applyToJob(dto.jobId, user);
+    return this.applyToJob(dto.jobId, user, dto, cv);
   }
 
   async applyToJob(
     jobId: number,
     user: any,
+    dto: Partial<CreateApplicationDto> = {},
+    cv?: Express.Multer.File,
   ) {
     if (user.role !== Role.SEEKER) {
       throw new ForbiddenException(
         'Only seekers can apply for jobs',
+      );
+    }
+
+    if (!cv) {
+      throw new BadRequestException(
+        'CV file is required',
       );
     }
 
@@ -113,6 +141,9 @@ export class ApplicationsService {
         job: {
           id: jobId,
         },
+        cvUrl: getCvUrl(cv),
+        coverLetter: dto.coverLetter || null,
+        portfolioUrl: dto.portfolioUrl || null,
       });
 
     const savedApplication =
