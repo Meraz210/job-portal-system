@@ -2,6 +2,23 @@
   box-sizing: border-box;
 }
 
+:root {
+  color-scheme: light;
+  --bg: #f3f6f8;
+  --surface: #ffffff;
+  --surface-muted: #f8fafb;
+  --border: #dce4ea;
+  --border-strong: #c9d4dc;
+  --text: #17212b;
+  --muted: #637381;
+  --primary: #0f766e;
+  --primary-dark: #115e59;
+  --primary-soft: #e4f4f1;
+  --danger: #b42318;
+  --danger-dark: #912018;
+  --shadow: 0 16px 38px rgba(18, 38, 54, 0.08);
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -9,8 +26,11 @@ body {
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  color: #1d2730;
-  background: #eef2f5;
+  color: var(--text);
+  background:
+    linear-gradient(180deg, #edf4f6 0, var(--bg) 320px),
+    var(--bg);
+  line-height: 1.5;
 }
 
 button,
@@ -20,11 +40,19 @@ textarea {
   font: inherit;
 }
 
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.22);
+  outline-offset: 2px;
+}
+
 .page-shell {
-  width: min(1040px, calc(100% - 32px));
+  width: min(1160px, calc(100% - 32px));
   min-height: 100vh;
   margin: 0 auto;
-  padding: 32px 0;
+  padding: 36px 0 48px;
 }
 
 .login-shell {
@@ -38,9 +66,9 @@ textarea {
 
 .top-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 420px);
   gap: 24px;
-  align-items: center;
+  align-items: stretch;
   margin-bottom: 24px;
 }
 
@@ -53,9 +81,9 @@ textarea {
 .create-job-panel,
 .applicants-panel {
   background: #ffffff;
-  border: 1px solid #d9e1e7;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 18px 45px rgba(31, 43, 56, 0.08);
+  box-shadow: var(--shadow);
 }
 
 .auth-panel {
@@ -81,7 +109,7 @@ textarea {
   display: flex;
   gap: 14px;
   align-items: center;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .brand-mark {
@@ -91,7 +119,8 @@ textarea {
   place-items: center;
   border-radius: 8px;
   color: #ffffff;
-  background: #0f766e;
+  background: var(--primary);
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.22);
 }
 
 h1,
@@ -101,14 +130,15 @@ p {
 }
 
 h1 {
-  font-size: 30px;
+  font-size: clamp(28px, 3vw, 38px);
   line-height: 1.1;
+  letter-spacing: 0;
 }
 
 .brand-row p,
 .empty-state,
 .status-text {
-  color: #5f6f7c;
+  color: var(--muted);
 }
 
 .login-form {
@@ -119,7 +149,8 @@ h1 {
 label {
   display: grid;
   gap: 8px;
-  color: #31414f;
+  color: #2f3d4a;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -128,11 +159,20 @@ select,
 textarea {
   width: 100%;
   min-height: 46px;
-  border: 1px solid #cbd6dd;
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
   padding: 0 13px;
-  color: #15202b;
-  background: #fbfcfd;
+  color: var(--text);
+  background: #ffffff;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8b9aa6;
 }
 
 textarea {
@@ -144,7 +184,7 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: #0f766e;
+  border-color: var(--primary);
   outline: 3px solid rgba(15, 118, 110, 0.16);
 }
 
@@ -158,9 +198,22 @@ button {
   border-radius: 6px;
   padding: 0 16px;
   color: #ffffff;
-  background: #0f766e;
+  background: var(--primary);
   cursor: pointer;
   font-weight: 800;
+  transition:
+    background 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--primary-dark);
+  box-shadow: 0 8px 18px rgba(15, 118, 110, 0.16);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 button:disabled {
@@ -171,6 +224,30 @@ button:disabled {
 .status-text {
   margin-top: 16px;
   min-height: 22px;
+  padding: 10px 12px;
+  border: 1px solid #cfe3ea;
+  border-radius: 6px;
+  background: #f1f8fa;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.status-success {
+  color: #0f5132;
+  border-color: #b7dfc8;
+  background: #eef9f2;
+}
+
+.status-error {
+  color: #842029;
+  border-color: #f1b6bd;
+  background: #fff1f2;
+}
+
+.status-loading {
+  color: #395469;
+  border-color: #cfe3ea;
+  background: #f1f8fa;
 }
 
 .panel-header {
@@ -178,7 +255,7 @@ button:disabled {
   align-items: center;
   gap: 10px;
   padding-bottom: 18px;
-  border-bottom: 1px solid #e2e8ed;
+  border-bottom: 1px solid #e5ebef;
 }
 
 .compact {
@@ -199,13 +276,13 @@ button:disabled {
   display: grid;
   gap: 4px;
   padding: 13px;
-  border: 1px solid #e1e8ed;
+  border: 1px solid #e5ebef;
   border-radius: 6px;
-  background: #f8fafb;
+  background: var(--surface-muted);
 }
 
 .session-details span {
-  color: #687985;
+  color: var(--muted);
   font-size: 13px;
 }
 
@@ -223,35 +300,40 @@ button:disabled {
   display: grid;
   gap: 6px;
   padding: 16px;
-  border: 1px solid #e1e8ed;
+  border: 1px solid #e5ebef;
   border-radius: 6px;
-  background: #f8fafb;
+  background: var(--surface-muted);
 }
 
 .portal-summary span {
-  color: #687985;
+  color: var(--muted);
   font-size: 13px;
   font-weight: 800;
 }
 
 .portal-summary strong {
-  color: #1d2730;
+  color: var(--text);
   font-size: 28px;
   line-height: 1;
 }
 
 .secondary-button {
-  color: #23313d;
-  background: #dbe4ea;
+  color: #243341;
+  background: #e5edf1;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: #d7e3e9;
+  box-shadow: 0 8px 18px rgba(36, 51, 65, 0.08);
 }
 
 .danger-button {
   color: #ffffff;
-  background: #b42318;
+  background: var(--danger);
 }
 
 .danger-button:hover {
-  background: #912018;
+  background: var(--danger-dark);
 }
 
 .icon-button {
@@ -262,8 +344,13 @@ button:disabled {
 }
 
 .empty-state {
-  padding-top: 18px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-muted);
   line-height: 1.6;
+  text-align: center;
 }
 
 .jobs-header {
@@ -272,15 +359,16 @@ button:disabled {
   justify-content: space-between;
   gap: 16px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #e2e8ed;
+  border-bottom: 1px solid #e5ebef;
 }
 
 .jobs-header h2 {
   font-size: 26px;
+  letter-spacing: 0;
 }
 
 .jobs-header p {
-  color: #5f6f7c;
+  color: var(--muted);
   margin-top: 4px;
 }
 
@@ -301,9 +389,9 @@ button:disabled {
   align-items: end;
   padding: 18px;
   margin-top: 20px;
-  border: 1px solid #e1e8ed;
+  border: 1px solid #e5ebef;
   border-radius: 8px;
-  background: #f8fafb;
+  background: var(--surface-muted);
 }
 
 .dashboard-header {
@@ -312,7 +400,7 @@ button:disabled {
   justify-content: space-between;
   gap: 16px;
   padding-bottom: 22px;
-  border-bottom: 1px solid #e2e8ed;
+  border-bottom: 1px solid #e5ebef;
 }
 
 .dashboard-header h2 {
@@ -320,7 +408,7 @@ button:disabled {
 }
 
 .dashboard-header p {
-  color: #5f6f7c;
+  color: var(--muted);
   margin-top: 4px;
 }
 
@@ -334,6 +422,7 @@ button:disabled {
 .dashboard-panel {
   padding: 20px;
   box-shadow: none;
+  background: var(--surface-muted);
 }
 
 .dashboard-job-form {
@@ -380,9 +469,19 @@ button:disabled {
   gap: 14px;
   align-content: start;
   padding: 20px;
-  border: 1px solid #dce5ea;
+  border: 1px solid #dfe7ec;
   border-radius: 8px;
-  background: #fbfcfd;
+  background: #ffffff;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.job-card:hover,
+.application-card:hover,
+.posted-job-card:hover {
+  border-color: #c8d8df;
+  box-shadow: 0 12px 28px rgba(18, 38, 54, 0.08);
 }
 
 .job-card h3,
@@ -395,7 +494,7 @@ button:disabled {
 .job-card p,
 .application-card p,
 .posted-job-card p {
-  color: #5f6f7c;
+  color: var(--muted);
 }
 
 .job-card dl,
@@ -412,13 +511,13 @@ button:disabled {
 .posted-job-card dl div {
   padding: 10px;
   border-radius: 6px;
-  background: #eef4f6;
+  background: var(--primary-soft);
 }
 
 .job-card dt,
 .application-card dt,
 .posted-job-card dt {
-  color: #687985;
+  color: #52736e;
   font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
@@ -428,13 +527,14 @@ button:disabled {
 .application-card dd,
 .posted-job-card dd {
   margin: 4px 0 0;
-  color: #1d2730;
+  color: var(--text);
   font-weight: 800;
   overflow-wrap: anywhere;
 }
 
 .job-description {
   line-height: 1.55;
+  color: #40515f;
 }
 
 .application-grid {
@@ -444,18 +544,10 @@ button:disabled {
   margin-top: 20px;
 }
 
-.application-card {
-  background: #fbfcfd;
-}
-
-.posted-job-card {
-  background: #fbfcfd;
-}
-
 .posted-job-heading {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: start;
-  justify-content: space-between;
   gap: 12px;
 }
 
@@ -485,7 +577,7 @@ button:disabled {
 
 .applicant-table-head {
   padding: 0 13px;
-  color: #687985;
+  color: var(--muted);
   font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
@@ -493,13 +585,13 @@ button:disabled {
 
 .applicant-row {
   padding: 13px;
-  border: 1px solid #e1e8ed;
+  border: 1px solid #e5ebef;
   border-radius: 6px;
-  background: #f8fafb;
+  background: #ffffff;
 }
 
 .applicant-row span {
-  color: #5f6f7c;
+  color: var(--muted);
   overflow-wrap: anywhere;
 }
 
@@ -508,9 +600,31 @@ button:disabled {
   padding: 0 10px;
   border-radius: 6px;
   background: #ffffff;
-  color: #1d2730;
+  color: var(--text);
   font-weight: 800;
   cursor: pointer;
+}
+
+.login-form button,
+.dashboard-job-form button,
+.job-card button {
+  width: 100%;
+}
+
+@media (max-width: 980px) {
+  .application-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .applicant-table {
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .applicant-table-head,
+  .applicant-row {
+    min-width: 760px;
+  }
 }
 
 @media (max-width: 780px) {
@@ -552,5 +666,63 @@ button:disabled {
 
   .jobs-actions button {
     flex: 1 1 160px;
+  }
+
+  .portal-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .posted-job-heading {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .page-shell {
+    width: min(100% - 20px, 1160px);
+    padding: 20px 0 32px;
+  }
+
+  .brand-row {
+    align-items: flex-start;
+  }
+
+  .brand-mark {
+    width: 48px;
+    height: 48px;
+  }
+
+  .job-card dl,
+  .application-card dl,
+  .posted-job-card dl {
+    grid-template-columns: 1fr;
+  }
+
+  .posted-job-heading {
+    gap: 8px;
+  }
+
+  .auth-panel,
+  .session-panel,
+  .jobs-layout,
+  .applications-section,
+  .employer-dashboard,
+  .dashboard-panel,
+  .applicants-panel {
+    border-radius: 7px;
+  }
+
+  .jobs-header h2,
+  .dashboard-header h2 {
+    font-size: 24px;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  .icon-button {
+    width: 42px;
+    min-width: 42px;
   }
 }

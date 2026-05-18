@@ -93,6 +93,30 @@ function getApplicationStatus(application) {
   return application.status || application.applicationStatus || 'pending';
 }
 
+function getStatusClass(message) {
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes('failed') ||
+    normalized.includes('could not') ||
+    normalized.includes('expired') ||
+    normalized.includes('invalid') ||
+    normalized.includes('not found') ||
+    normalized.includes('only ')
+  ) {
+    return 'status-text status-error';
+  }
+
+  if (
+    normalized.includes('loading') ||
+    normalized.includes('login to')
+  ) {
+    return 'status-text status-loading';
+  }
+
+  return 'status-text status-success';
+}
+
 function App() {
   const [email, setEmail] = React.useState('meraz@gmail.com');
   const [password, setPassword] = React.useState('123456');
@@ -635,7 +659,7 @@ function App() {
             </button>
           </form>
 
-          {status && <p className="status-text">{status}</p>}
+          {status && <p className={getStatusClass(status)}>{status}</p>}
         </section>
       </main>
     );
@@ -736,7 +760,9 @@ function App() {
               </div>
 
               {employerStatus && (
-                <p className="status-text">{employerStatus}</p>
+                <p className={getStatusClass(employerStatus)}>
+                  {employerStatus}
+                </p>
               )}
 
               {isEmployerJobsLoading && !employerStatus && (
@@ -905,7 +931,9 @@ function App() {
           </button>
         </div>
 
-        {jobsStatus && <p className="status-text">{jobsStatus}</p>}
+        {jobsStatus && (
+          <p className={getStatusClass(jobsStatus)}>{jobsStatus}</p>
+        )}
 
         <div className="job-grid">
           {jobs.map((job) => (
@@ -960,7 +988,9 @@ function App() {
             )}
 
             {applicantsStatus && (
-              <p className="status-text">{applicantsStatus}</p>
+              <p className={getStatusClass(applicantsStatus)}>
+                {applicantsStatus}
+              </p>
             )}
 
             {!isApplicantsLoading &&
@@ -1031,7 +1061,9 @@ function App() {
           </div>
 
           {applicationsStatus && (
-            <p className="status-text">{applicationsStatus}</p>
+            <p className={getStatusClass(applicationsStatus)}>
+              {applicationsStatus}
+            </p>
           )}
 
           {isApplicationsLoading && !applicationsStatus && (
