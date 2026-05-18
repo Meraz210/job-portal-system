@@ -950,6 +950,34 @@ function App() {
     adminApplications.length,
     1,
   );
+  const selectedEmployerJob = employerJobs.find(
+    (job) => job.id === selectedApplicants?.jobId,
+  );
+  const selectedEmployerApplicants = selectedApplicants?.applicants || [];
+  const employerApplicationStatusCounts = selectedEmployerApplicants.reduce(
+    (counts, application) => {
+      const applicationStatus = getApplicationStatus(application);
+      return {
+        ...counts,
+        [applicationStatus]: (counts[applicationStatus] || 0) + 1,
+      };
+    },
+    { pending: 0, accepted: 0, rejected: 0 },
+  );
+  const maxEmployerApplicationStatusCount = Math.max(
+    ...Object.values(employerApplicationStatusCounts),
+    1,
+  );
+  const maxEmployerApplicationsPerJob = Math.max(
+    selectedEmployerApplicants.length,
+    1,
+  );
+  const jobFormFields = [
+    { name: 'title', label: 'Title', icon: BriefcaseBusiness },
+    { name: 'company', label: 'Company', icon: Building2 },
+    { name: 'location', label: 'Location', icon: MapPin },
+    { name: 'salary', label: 'Salary', icon: DollarSign },
+  ];
 
   if (!token || !user) {
     return (
@@ -1124,7 +1152,7 @@ function App() {
           )}
           {role === 'employer' && (
             <>
-              <a href="#employer-dashboard">
+              <a className="active" href="#employer-dashboard">
                 <LayoutDashboard size={18} />
                 Employer Dashboard
               </a>
@@ -1135,7 +1163,7 @@ function App() {
             </>
           )}
           {role === 'admin' && (
-            <a href="#admin-dashboard">
+            <a className="active" href="#admin-dashboard">
               <ShieldCheck size={18} />
               Admin Dashboard
             </a>
@@ -1576,6 +1604,97 @@ function App() {
             </button>
           </div>
 
+          <div className="employer-analytics-grid">
+            <section className="employer-chart-card">
+              <div className="admin-chart-header">
+                <div>
+                  <span>Applicants</span>
+                  <strong>Applicants trend</strong>
+                </div>
+                <BarChart3 size={20} />
+              </div>
+              <p className="chart-helper">
+                {selectedEmployerJob
+                  ? `Showing applicants for ${selectedEmployerJob.title}.`
+                  : 'Open applicants from any posted job to populate this chart.'}
+              </p>
+              <div className="admin-bar-list">
+                {APPLICATION_STATUSES.map((applicationStatus) => (
+                  <div className="admin-bar-row" key={applicationStatus}>
+                    <span className={`status-badge status-${applicationStatus}`}>
+                      {applicationStatus}
+                    </span>
+                    <div className="admin-bar-track">
+                      <div
+                        className={`admin-bar-fill status-fill-${applicationStatus}`}
+                        style={{
+                          width: `${(employerApplicationStatusCounts[applicationStatus] / maxEmployerApplicationStatusCount) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <strong>{employerApplicationStatusCounts[applicationStatus]}</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="employer-chart-card">
+              <div className="admin-chart-header">
+                <div>
+                  <span>Jobs</span>
+                  <strong>Jobs posted</strong>
+                </div>
+                <TrendingUp size={20} />
+              </div>
+              <div className="employer-big-stat">
+                <strong>{employerJobs.length}</strong>
+                <span>Active postings in your employer workspace</span>
+              </div>
+              <div className="admin-bar-track">
+                <div
+                  className="admin-bar-fill jobs-fill"
+                  style={{ width: `${Math.min(employerJobs.length * 20, 100)}%` }}
+                />
+              </div>
+            </section>
+
+            <section className="employer-chart-card">
+              <div className="admin-chart-header">
+                <div>
+                  <span>Applications</span>
+                  <strong>Applications per job</strong>
+                </div>
+                <Users size={20} />
+              </div>
+              <div className="admin-bar-list">
+                {employerJobs.slice(0, 4).map((job) => {
+                  const applicantCount =
+                    job.id === selectedApplicants?.jobId
+                      ? selectedEmployerApplicants.length
+                      : 0;
+
+                  return (
+                    <div className="employer-job-bar-row" key={job.id}>
+                      <span>{job.title}</span>
+                      <div className="admin-bar-track">
+                        <div
+                          className="admin-bar-fill applications-fill"
+                          style={{
+                            width: `${(applicantCount / maxEmployerApplicationsPerJob) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <strong>{applicantCount}</strong>
+                    </div>
+                  );
+                })}
+                {employerJobs.length === 0 && (
+                  <p className="mini-empty-state">No posted jobs yet.</p>
+                )}
+              </div>
+            </section>
+          </div>
+
           <div className="dashboard-grid">
             <section className="dashboard-panel">
               <div className="panel-header compact">
@@ -1656,22 +1775,34 @@ function App() {
               </div>
 
               <form className="dashboard-job-form" onSubmit={handleCreateJob}>
-                {['title', 'company', 'location', 'salary'].map((field) => (
-                  <label key={field}>
-                    {field[0].toUpperCase() + field.slice(1)}
-                    <input
-                      value={jobForm[field]}
-                      onChange={(event) =>
-                        setJobForm({
-                          ...jobForm,
-                          [field]: event.target.value,
-                        })
-                      }
-                      required
-                    />
-                  </label>
-                ))}
-                <label>
+                {jobFormFields.map((field) => {
+                  const FieldIcon = field.icon;
+
+                  return (
+                    <label key={field.name}>
+                      {field.label}
+                      <div className="input-with-icon">
+                        <FieldIcon size={18} />
+                        <input
+                          value={jobForm[field.name]}
+                          onChange={(event) =>
+                            setJobForm({
+                              ...jobForm,
+                              [field.name]: event.target.value,
+                            })
+                          }
+                          placeholder={
+                            field.name === 'salary'
+                              ? 'Example: 50000 - 80000'
+                              : field.label
+                          }
+                          required
+                        />
+                      </div>
+                    </label>
+                  );
+                })}
+                <label className="wide-field">
                   Description
                   <textarea
                     value={jobForm.description}
@@ -1681,6 +1812,7 @@ function App() {
                         description: event.target.value,
                       })
                     }
+                    placeholder="Write a clear role summary, requirements, and responsibilities."
                     required
                   />
                 </label>
