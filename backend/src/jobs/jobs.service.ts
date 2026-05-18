@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -67,7 +68,7 @@ export class JobsService {
     }
 
     if (job.createdBy.id !== user.userId) {
-      throw new Error(
+      throw new ForbiddenException(
         'You can only update your own jobs',
       );
     }
@@ -88,7 +89,7 @@ export class JobsService {
     }
 
     if (job.createdBy.id !== user.userId) {
-      throw new Error(
+      throw new ForbiddenException(
         'You can only delete your own jobs',
       );
     }
