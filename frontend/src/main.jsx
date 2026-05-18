@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   Building2,
+  BarChart3,
   BriefcaseBusiness,
   ClipboardList,
   DollarSign,
@@ -16,7 +17,9 @@ import {
   Search,
   Send,
   ShieldCheck,
+  TrendingUp,
   UserRound,
+  Users,
 } from 'lucide-react';
 import './styles.css';
 
@@ -127,6 +130,39 @@ function getJobImage(job) {
   return '/images/frontend-developer.png';
 }
 
+function formatSalary(salary = '') {
+  const value = String(salary).trim();
+
+  if (!value) {
+    return 'Salary not listed';
+  }
+
+  const cleanedValue = value
+    .replace(/৳/g, '')
+    .replace(/\b(BDT|TK|Taka)\b/gi, '')
+    .trim();
+  const numberParts = cleanedValue.match(/\d[\d,]*/g);
+
+  if (numberParts?.length) {
+    let formattedValue = cleanedValue;
+
+    numberParts.forEach((part) => {
+      const numericValue = Number(part.replace(/,/g, ''));
+
+      if (!Number.isNaN(numericValue)) {
+        formattedValue = formattedValue.replace(
+          part,
+          new Intl.NumberFormat('en-BD').format(numericValue),
+        );
+      }
+    });
+
+    return formattedValue.trim();
+  }
+
+  return cleanedValue;
+}
+
 function getStatusClass(message) {
   const normalized = message.toLowerCase();
 
@@ -154,8 +190,14 @@ function getStatusClass(message) {
 function App() {
   const [email, setEmail] = React.useState('meraz@gmail.com');
   const [password, setPassword] = React.useState('123456');
+  const [fullName, setFullName] = React.useState('');
+  const [signupRole, setSignupRole] = React.useState('seeker');
+  const [authMode, setAuthMode] = React.useState('login');
   const [token, setToken] = React.useState(() =>
     localStorage.getItem('access_token'),
+  );
+  const [profileImage, setProfileImage] = React.useState(() =>
+    localStorage.getItem('profile_image'),
   );
   const [status, setStatus] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
@@ -180,6 +222,7 @@ function App() {
   const [applicationsStatus, setApplicationsStatus] = React.useState('');
   const [isApplicationsLoading, setIsApplicationsLoading] =
     React.useState(false);
+  const [applyingJobId, setApplyingJobId] = React.useState(null);
   const [selectedApplicants, setSelectedApplicants] = React.useState(null);
   const [applicantsStatus, setApplicantsStatus] = React.useState('');
   const [isApplicantsLoading, setIsApplicantsLoading] = React.useState(false);
@@ -194,6 +237,11 @@ function App() {
 
   const user = token ? decodeJwt(token) : null;
   const role = user?.role;
+  const appliedJobIds = new Set(
+    applications
+      .map((application) => application.job?.id)
+      .filter(Boolean),
+  );
 
   React.useEffect(() => {
     if (!token) {
@@ -481,6 +529,43 @@ function App() {
     }
   }
 
+  async function handleSignup(event) {
+    event.preventDefault();
+    setIsLoading(true);
+    setStatus('');
+
+    try {
+      const endpoint =
+        signupRole === 'employer'
+          ? '/auth/register/employer'
+          : '/auth/register';
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName,
+          email,
+          password,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Signup failed');
+      }
+
+      setStatus('Account created. Please login.');
+      setAuthMode('login');
+      setFullName('');
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   async function handleCreateJob(event) {
     event.preventDefault();
     setJobsStatus('');
@@ -549,6 +634,7 @@ function App() {
 
   async function handleApply(jobId) {
     setJobsStatus('');
+    setApplyingJobId(jobId);
 
     try {
       const response = await fetch(`${API_URL}/applications`, {
@@ -574,6 +660,8 @@ function App() {
       await loadMyApplications();
     } catch (error) {
       setJobsStatus(error.message);
+    } finally {
+      setApplyingJobId(null);
     }
   }
 
@@ -804,6 +892,65 @@ function App() {
     setStatus('Logged out.');
   }
 
+  function handleProfileImageChange(event) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const image = reader.result;
+
+      if (typeof image === 'string') {
+        localStorage.setItem('profile_image', image);
+        setProfileImage(image);
+      }
+    };
+
+    reader.readAsDataURL(file);
+    event.target.value = '';
+  }
+
+  function removeProfileImage() {
+    localStorage.removeItem('profile_image');
+    setProfileImage(null);
+  }
+
+  const adminRoleCounts = adminUsers.reduce(
+    (counts, adminUser) => {
+      const userRole = adminUser.role || 'unknown';
+      return {
+        ...counts,
+        [userRole]: (counts[userRole] || 0) + 1,
+      };
+    },
+    { admin: 0, employer: 0, seeker: 0 },
+  );
+  const adminStatusCounts = adminApplications.reduce(
+    (counts, application) => {
+      const applicationStatus = getApplicationStatus(application);
+      return {
+        ...counts,
+        [applicationStatus]: (counts[applicationStatus] || 0) + 1,
+      };
+    },
+    { pending: 0, accepted: 0, rejected: 0 },
+  );
+  const maxRoleCount = Math.max(...Object.values(adminRoleCounts), 1);
+  const maxApplicationStatusCount = Math.max(
+    ...Object.values(adminStatusCounts),
+    1,
+  );
+  const maxAdminTotal = Math.max(
+    adminUsers.length,
+    adminJobs.length,
+    adminApplications.length,
+    1,
+  );
+
   if (!token || !user) {
     return (
       <main className="page-shell login-shell">
@@ -819,6 +966,13 @@ function App() {
                 A role-based hiring platform for seekers and employers with job
                 search, applications, applicant review, and protected sessions.
               </p>
+            </div>
+            <div className="landing-illustration-card">
+              <img
+                src="/images/job-portal.png"
+                alt="Job portal hiring illustration"
+                className="landing-illustration"
+              />
             </div>
             <div className="hero-stats">
               <div>
@@ -842,12 +996,60 @@ function App() {
                 <LogIn size={22} />
               </div>
               <div>
-                <h2>Welcome Back</h2>
-                <p>Login to access your dashboard.</p>
+                <h2>{authMode === 'login' ? 'Welcome Back' : 'Create Account'}</h2>
+                <p>
+                  {authMode === 'login'
+                    ? 'Login to access your dashboard.'
+                    : 'Sign up as a seeker or employer.'}
+                </p>
               </div>
             </div>
 
-            <form className="login-form" onSubmit={handleLogin}>
+            <div className="auth-tabs">
+              <button
+                className={authMode === 'login' ? 'active' : ''}
+                type="button"
+                onClick={() => setAuthMode('login')}
+              >
+                Login
+              </button>
+              <button
+                className={authMode === 'signup' ? 'active' : ''}
+                type="button"
+                onClick={() => setAuthMode('signup')}
+              >
+                Sign Up
+              </button>
+            </div>
+
+            <form
+              className="login-form"
+              onSubmit={authMode === 'login' ? handleLogin : handleSignup}
+            >
+              {authMode === 'signup' && (
+                <>
+                  <label>
+                    Full Name
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(event) => setFullName(event.target.value)}
+                      placeholder="Your full name"
+                      required
+                    />
+                  </label>
+                  <label>
+                    Account Type
+                    <select
+                      value={signupRole}
+                      onChange={(event) => setSignupRole(event.target.value)}
+                    >
+                      <option value="seeker">Job Seeker</option>
+                      <option value="employer">Employer</option>
+                    </select>
+                  </label>
+                </>
+              )}
               <label>
                 Email
                 <input
@@ -872,7 +1074,13 @@ function App() {
 
               <button type="submit" disabled={isLoading}>
                 <LogIn size={18} />
-                {isLoading ? 'Signing in...' : 'Login'}
+                {isLoading
+                  ? authMode === 'login'
+                    ? 'Signing in...'
+                    : 'Creating account...'
+                  : authMode === 'login'
+                    ? 'Login'
+                    : 'Create Account'}
               </button>
             </form>
 
@@ -892,7 +1100,14 @@ function App() {
           </div>
           <div>
             <strong>Job Portal</strong>
-            <span>{role === 'employer' ? 'Employer' : 'Seeker'} Workspace</span>
+            <span>
+              {role === 'employer'
+                ? 'Employer'
+                : role === 'admin'
+                  ? 'Admin'
+                  : 'Seeker'}{' '}
+              Workspace
+            </span>
           </div>
         </div>
 
@@ -941,17 +1156,42 @@ function App() {
               </h1>
           </div>
           <div className="profile-card">
-            <div className="profile-avatar">
-              <UserRound size={20} />
+            <div className="profile-identity">
+              <div className="profile-avatar">
+                {profileImage ? (
+                  <img src={profileImage} alt="Profile" />
+                ) : (
+                  <UserRound size={20} />
+                )}
+              </div>
+              <div>
+                <strong>{user.email}</strong>
+                <span>{user.role}</span>
+              </div>
             </div>
-            <div>
-              <strong>{user.email}</strong>
-              <span>{user.role}</span>
+            <div className="profile-actions">
+              <label className="avatar-upload-button">
+                Change Photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageChange}
+                />
+              </label>
+              {profileImage && (
+                <button
+                  className="secondary-button avatar-remove-button"
+                  type="button"
+                  onClick={removeProfileImage}
+                >
+                  Remove
+                </button>
+              )}
+              <button className="secondary-button logout-button" onClick={handleLogout}>
+                <LogOut size={18} />
+                Logout
+              </button>
             </div>
-            <button className="secondary-button logout-button" onClick={handleLogout}>
-              <LogOut size={18} />
-              Logout
-            </button>
           </div>
         </header>
 
@@ -998,8 +1238,8 @@ function App() {
           </div>
         </section>
 
-      <section className="top-grid">
-        <div className="auth-panel">
+      <section className="workspace-overview">
+        <div className="overview-card">
           <div className="brand-row">
             <div className="brand-mark">
               <BriefcaseBusiness size={26} />
@@ -1009,7 +1249,9 @@ function App() {
               <p>
                 {role === 'employer'
                   ? 'Employer workspace'
-                  : 'Job seeker workspace'}
+                  : role === 'admin'
+                    ? 'Admin workspace'
+                    : 'Job seeker workspace'}
               </p>
             </div>
           </div>
@@ -1040,35 +1282,21 @@ function App() {
           </div>
         </div>
 
-        <div className="session-panel">
-          <div className="panel-header">
-            <ShieldCheck size={22} />
-            <h2>Current Session</h2>
-          </div>
-
-          {user ? (
-            <div className="session-details">
-              <div>
-                <span>User ID</span>
-                <strong>{user.sub}</strong>
-              </div>
-              <div>
-                <span>Email</span>
-                <strong>{user.email}</strong>
-              </div>
-              <div>
-                <span>Role</span>
-                <strong>{user.role}</strong>
-              </div>
-              <button className="secondary-button" onClick={handleLogout}>
-                Logout
-              </button>
+        <div className="session-chip-panel">
+          <div className="session-chip">
+            <ShieldCheck size={20} />
+            <div>
+              <span>Signed in as</span>
+              <strong>{user.email}</strong>
             </div>
-          ) : (
-            <p className="empty-state">
-              Login to save the JWT token and unlock role-based screens.
-            </p>
-          )}
+          </div>
+          <div className="session-chip">
+            <UserRound size={20} />
+            <div>
+              <span>Role</span>
+              <strong>{user.role}</strong>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1090,18 +1318,122 @@ function App() {
           </div>
 
           <div className="admin-summary-grid">
-            <div>
+            <div className="admin-metric-card users-metric">
+              <div className="metric-icon">
+                <Users size={20} />
+              </div>
               <span>Total Users</span>
               <strong>{adminUsers.length}</strong>
+              <small>Registered platform accounts</small>
             </div>
-            <div>
+            <div className="admin-metric-card jobs-metric">
+              <div className="metric-icon">
+                <BriefcaseBusiness size={20} />
+              </div>
               <span>Total Jobs</span>
               <strong>{adminJobs.length}</strong>
+              <small>Published opportunities</small>
             </div>
-            <div>
+            <div className="admin-metric-card applications-metric">
+              <div className="metric-icon">
+                <ClipboardList size={20} />
+              </div>
               <span>Total Applications</span>
               <strong>{adminApplications.length}</strong>
+              <small>Submitted by seekers</small>
             </div>
+          </div>
+
+          <div className="admin-analytics-grid">
+            <section className="admin-chart-card">
+              <div className="admin-chart-header">
+                <div>
+                  <span>Applications</span>
+                  <strong>Total applications</strong>
+                </div>
+                <BarChart3 size={20} />
+              </div>
+              <div className="admin-bar-list">
+                {APPLICATION_STATUSES.map((applicationStatus) => (
+                  <div className="admin-bar-row" key={applicationStatus}>
+                    <span className={`status-badge status-${applicationStatus}`}>
+                      {applicationStatus}
+                    </span>
+                    <div className="admin-bar-track">
+                      <div
+                        className={`admin-bar-fill status-fill-${applicationStatus}`}
+                        style={{
+                          width: `${(adminStatusCounts[applicationStatus] / maxApplicationStatusCount) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <strong>{adminStatusCounts[applicationStatus]}</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="admin-chart-card">
+              <div className="admin-chart-header">
+                <div>
+                  <span>Jobs</span>
+                  <strong>Jobs created</strong>
+                </div>
+                <TrendingUp size={20} />
+              </div>
+              <div className="admin-total-chart">
+                <div>
+                  <span>Jobs</span>
+                  <strong>{adminJobs.length}</strong>
+                  <div className="admin-bar-track">
+                    <div
+                      className="admin-bar-fill jobs-fill"
+                      style={{
+                        width: `${(adminJobs.length / maxAdminTotal) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <span>Applications</span>
+                  <strong>{adminApplications.length}</strong>
+                  <div className="admin-bar-track">
+                    <div
+                      className="admin-bar-fill applications-fill"
+                      style={{
+                        width: `${(adminApplications.length / maxAdminTotal) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section className="admin-chart-card">
+              <div className="admin-chart-header">
+                <div>
+                  <span>Users</span>
+                  <strong>Role distribution</strong>
+                </div>
+                <Users size={20} />
+              </div>
+              <div className="admin-bar-list">
+                {Object.entries(adminRoleCounts).map(([userRole, count]) => (
+                  <div className="admin-bar-row" key={userRole}>
+                    <span className={`role-pill role-${userRole}`}>{userRole}</span>
+                    <div className="admin-bar-track">
+                      <div
+                        className="admin-bar-fill role-fill"
+                        style={{
+                          width: `${(count / maxRoleCount) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <strong>{count}</strong>
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
 
           {adminStatus && (
@@ -1132,7 +1464,9 @@ function App() {
                     <div className="admin-row users-table" key={adminUser.id}>
                       <strong>{adminUser.fullName}</strong>
                       <span>{adminUser.email}</span>
-                      <span>{adminUser.role}</span>
+                      <span className={`role-pill role-${adminUser.role}`}>
+                        {adminUser.role}
+                      </span>
                       <button
                         className="danger-button icon-button"
                         type="button"
@@ -1209,7 +1543,13 @@ function App() {
                       </strong>
                       <span>{application.applicant?.email || 'No email'}</span>
                       <span>{application.job?.title || 'Untitled job'}</span>
-                      <span>{getApplicationStatus(application)}</span>
+                      <span
+                        className={`status-badge status-${getApplicationStatus(
+                          application,
+                        )}`}
+                      >
+                        {getApplicationStatus(application)}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -1299,7 +1639,7 @@ function App() {
                         </div>
                         <div>
                           <dt>Salary</dt>
-                          <dd>{job.salary}</dd>
+                          <dd>{formatSalary(job.salary)}</dd>
                         </div>
                       </dl>
                       <p className="job-description">{job.description}</p>
@@ -1457,7 +1797,7 @@ function App() {
                 </span>
                 <span>
                   <DollarSign size={14} />
-                  {job.salary}
+                  {formatSalary(job.salary)}
                 </span>
               </div>
               <dl>
@@ -1467,15 +1807,29 @@ function App() {
                 </div>
                 <div>
                   <dt>Salary</dt>
-                  <dd>{job.salary}</dd>
+                  <dd>{formatSalary(job.salary)}</dd>
                 </div>
               </dl>
               <p className="job-description">{job.description}</p>
               {role === 'seeker' && (
-                <button onClick={() => handleApply(job.id)}>
-                  <Send size={18} />
-                  Apply
-                </button>
+                <div className="apply-action">
+                  {appliedJobIds.has(job.id) && (
+                    <span className="applied-badge">Applied</span>
+                  )}
+                  <button
+                    onClick={() => handleApply(job.id)}
+                    disabled={
+                      applyingJobId === job.id || appliedJobIds.has(job.id)
+                    }
+                  >
+                    <Send size={18} />
+                    {appliedJobIds.has(job.id)
+                      ? 'Application Sent'
+                      : applyingJobId === job.id
+                        ? 'Applying...'
+                        : 'Apply Now'}
+                  </button>
+                </div>
               )}
               {role === 'employer' && (
                 <button
@@ -1608,7 +1962,7 @@ function App() {
                     <dl>
                       <div>
                         <dt>Salary</dt>
-                        <dd>{job.salary || 'Not listed'}</dd>
+                        <dd>{formatSalary(job.salary)}</dd>
                       </div>
                       <div>
                         <dt>Location</dt>
