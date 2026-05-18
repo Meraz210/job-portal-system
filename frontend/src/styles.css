@@ -27,6 +27,15 @@ textarea {
   padding: 32px 0;
 }
 
+.login-shell {
+  display: grid;
+  place-items: center;
+}
+
+.login-only-panel {
+  width: min(460px, 100%);
+}
+
 .top-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
@@ -202,6 +211,33 @@ button:disabled {
 
 .session-details strong {
   overflow-wrap: anywhere;
+}
+
+.portal-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.portal-summary div {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid #e1e8ed;
+  border-radius: 6px;
+  background: #f8fafb;
+}
+
+.portal-summary span {
+  color: #687985;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.portal-summary strong {
+  color: #1d2730;
+  font-size: 28px;
+  line-height: 1;
 }
 
 .secondary-button {

@@ -36,6 +36,20 @@ function decodeJwt(token) {
   }
 }
 
+function isTokenValid(token) {
+  const payload = decodeJwt(token);
+
+  if (!payload) {
+    return false;
+  }
+
+  if (payload.exp && payload.exp * 1000 <= Date.now()) {
+    return false;
+  }
+
+  return true;
+}
+
 function normalizeJobs(data) {
   if (Array.isArray(data)) {
     return data;
@@ -119,16 +133,29 @@ function App() {
   const role = user?.role;
 
   React.useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    if (!isTokenValid(token)) {
+      expireSession();
+      return;
+    }
+
     loadJobs();
-  }, []);
+  }, [token]);
 
   React.useEffect(() => {
+    if (!token) {
+      return;
+    }
+
     const timeoutId = window.setTimeout(() => {
       loadJobs(jobFilters);
     }, 350);
 
     return () => window.clearTimeout(timeoutId);
-  }, [jobFilters]);
+  }, [jobFilters, token]);
 
   React.useEffect(() => {
     if (token && role === 'seeker') {
@@ -217,6 +244,11 @@ function App() {
       });
       const data = await response.json();
 
+      if (response.status === 401) {
+        expireSession();
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(data.message || 'Could not load applications');
       }
@@ -247,6 +279,11 @@ function App() {
         },
       });
       const data = await response.json();
+
+      if (response.status === 401) {
+        expireSession();
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(data.message || 'Could not load posted jobs');
@@ -284,9 +321,13 @@ function App() {
         throw new Error(data.message || 'Login failed');
       }
 
+      if (!isTokenValid(data.access_token)) {
+        throw new Error('Session expired. Please login again.');
+      }
+
       localStorage.setItem('access_token', data.access_token);
       setToken(data.access_token);
-      setStatus('Login successful. Token saved.');
+      setStatus('');
       await loadJobs();
       const loggedInUser = decodeJwt(data.access_token);
       if (loggedInUser?.role === 'seeker') {
@@ -321,6 +362,11 @@ function App() {
         },
       );
       const data = await response.json();
+
+      if (response.status === 401) {
+        expireSession();
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(
@@ -377,6 +423,11 @@ function App() {
       });
       const data = await response.json();
 
+      if (response.status === 401) {
+        expireSession();
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(data.message || 'Could not apply');
       }
@@ -407,6 +458,11 @@ function App() {
         },
       });
       const data = await response.json();
+
+      if (response.status === 401) {
+        expireSession();
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(data.message || 'Could not load applicants');
@@ -448,6 +504,11 @@ function App() {
       );
       const data = await response.json();
 
+      if (response.status === 401) {
+        expireSession();
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(data.message || 'Could not update application status');
       }
@@ -485,6 +546,11 @@ function App() {
       });
       const data = await response.json();
 
+      if (response.status === 401) {
+        expireSession();
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(data.message || 'Could not delete job');
       }
@@ -497,27 +563,46 @@ function App() {
     }
   }
 
-  function handleLogout() {
+  function clearSession() {
     localStorage.removeItem('access_token');
     setToken(null);
+    setJobs([]);
+    setJobsStatus('');
+    setJobFilters({
+      search: '',
+      location: '',
+      company: '',
+    });
     setApplications([]);
     setApplicationsStatus('');
     setEmployerJobs([]);
     setEmployerStatus('');
+    setSelectedApplicants(null);
+    setApplicantsStatus('');
+    resetJobForm();
+  }
+
+  function expireSession() {
+    clearSession();
+    setStatus('Session expired. Please login again.');
+  }
+
+  function handleLogout() {
+    clearSession();
     setStatus('Logged out.');
   }
 
-  return (
-    <main className="page-shell">
-      <section className="top-grid">
-        <div className="auth-panel">
+  if (!token || !user) {
+    return (
+      <main className="page-shell login-shell">
+        <section className="auth-panel login-only-panel">
           <div className="brand-row">
             <div className="brand-mark">
               <BriefcaseBusiness size={26} />
             </div>
             <div>
               <h1>Job Portal</h1>
-              <p>Backend authentication is connected.</p>
+              <p>Login to access your dashboard.</p>
             </div>
           </div>
 
@@ -551,6 +636,47 @@ function App() {
           </form>
 
           {status && <p className="status-text">{status}</p>}
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="page-shell">
+      <section className="top-grid">
+        <div className="auth-panel">
+          <div className="brand-row">
+            <div className="brand-mark">
+              <BriefcaseBusiness size={26} />
+            </div>
+            <div>
+              <h1>Job Portal</h1>
+              <p>
+                {role === 'employer'
+                  ? 'Employer workspace'
+                  : 'Job seeker workspace'}
+              </p>
+            </div>
+          </div>
+
+          <div className="portal-summary">
+            <div>
+              <span>Available Jobs</span>
+              <strong>{jobs.length}</strong>
+            </div>
+            {role === 'seeker' && (
+              <div>
+                <span>My Applications</span>
+                <strong>{applications.length}</strong>
+              </div>
+            )}
+            {role === 'employer' && (
+              <div>
+                <span>Posted Jobs</span>
+                <strong>{employerJobs.length}</strong>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="session-panel">
