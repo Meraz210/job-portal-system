@@ -433,6 +433,45 @@ textarea:focus-visible {
   color: #a7f3d0;
 }
 
+.hero-cta-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+.hero-cta {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-weight: 900;
+  text-decoration: none;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.hero-cta:hover {
+  transform: translateY(-1px);
+}
+
+.primary-cta {
+  color: var(--primary-dark);
+  background: #ffffff;
+  box-shadow: 0 12px 24px rgba(2, 6, 23, 0.16);
+}
+
+.secondary-cta {
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.14);
+}
+
 .hero-summary div {
   border-color: rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.14);
@@ -839,11 +878,12 @@ button:disabled {
     auto;
   gap: 14px;
   align-items: end;
-  padding: 18px;
+  padding: 20px;
   margin-top: 20px;
-  border: 1px solid #e5ebef;
-  border-radius: 8px;
-  background: var(--surface-muted);
+  border: 1px solid #dce7ec;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff, #f8fbfc);
+  box-shadow: 0 14px 34px rgba(18, 38, 54, 0.05);
 }
 
 .input-with-icon {
@@ -861,6 +901,14 @@ button:disabled {
 
 .input-with-icon input {
   padding-left: 42px;
+}
+
+.job-filter-panel input {
+  border-radius: 12px;
+}
+
+.job-filter-panel input:focus {
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1);
 }
 
 .dashboard-header {
@@ -1216,6 +1264,7 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   padding: 0 10px;
   border-radius: 999px;
   font-size: 12px;
@@ -1246,16 +1295,49 @@ button:disabled {
 .status-pending {
   color: #92400e;
   background: #fff7df;
+  border: 1px solid #fde68a;
 }
 
 .status-accepted {
   color: #047857;
   background: #dff7ef;
+  border: 1px solid #a7f3d0;
 }
 
 .status-rejected {
   color: #b42318;
   background: #fee4e2;
+  border: 1px solid #fecaca;
+}
+
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 28px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: #41515f;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 14px 34px rgba(18, 38, 54, 0.05);
+}
+
+.app-footer strong,
+.app-footer span {
+  display: block;
+}
+
+.app-footer span {
+  margin-top: 3px;
+  color: var(--muted);
+}
+
+.app-footer a {
+  color: var(--primary-dark);
+  font-weight: 900;
+  text-decoration: none;
 }
 
 .dashboard-job-form {
@@ -1427,6 +1509,10 @@ button:disabled {
   gap: 10px;
 }
 
+.apply-action button {
+  box-shadow: 0 10px 22px rgba(15, 118, 110, 0.12);
+}
+
 .applied-badge {
   width: fit-content;
   display: inline-flex;
@@ -1518,6 +1604,41 @@ button:disabled {
 
 .application-card .wide-detail {
   grid-column: 1 / -1;
+}
+
+.application-card {
+  min-height: 270px;
+}
+
+.application-card-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.application-card-header h3 {
+  line-height: 1.25;
+}
+
+.application-card-header p {
+  margin-top: 4px;
+}
+
+.application-icon {
+  width: 46px;
+  min-width: 46px;
+  height: 46px;
+}
+
+.application-card dd {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.application-card dd svg {
+  color: var(--primary-dark);
 }
 
 .applicant-table {
@@ -1694,6 +1815,19 @@ button:disabled {
   .profile-card {
     min-width: 0;
     justify-content: space-between;
+  }
+
+  .application-card-header {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .application-card-header .status-badge {
+    grid-column: 1 / -1;
+  }
+
+  .app-footer {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 

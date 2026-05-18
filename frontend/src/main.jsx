@@ -4,6 +4,8 @@ import {
   Building2,
   BarChart3,
   BriefcaseBusiness,
+  CalendarDays,
+  CheckCircle2,
   ClipboardList,
   DollarSign,
   Trash2,
@@ -1231,8 +1233,20 @@ function App() {
                 ? 'Manage postings, applicants, and hiring decisions.'
                 : role === 'admin'
                   ? 'Monitor users, jobs, and applications from one control panel.'
-                : 'Search jobs, apply faster, and track every application.'}
+                  : 'Search jobs, apply faster, and track every application.'}
             </h2>
+            {role === 'seeker' && (
+              <div className="hero-cta-row">
+                <a className="hero-cta primary-cta" href="#jobs">
+                  <Search size={18} />
+                  Find Jobs
+                </a>
+                <a className="hero-cta secondary-cta" href="#applications">
+                  <ClipboardList size={18} />
+                  My Applications
+                </a>
+              </div>
+            )}
           </div>
           <div className="portal-summary hero-summary">
             <div>
@@ -2087,22 +2101,44 @@ function App() {
 
                 return (
                   <article className="application-card" key={application.id}>
-                    <div>
-                      <h3>{job.title || 'Untitled job'}</h3>
-                      <p>{job.company || 'Company not listed'}</p>
+                    <div className="application-card-header">
+                      <div className="company-logo application-icon" aria-hidden="true">
+                        {getCompanyInitials(job.company)}
+                      </div>
+                      <div>
+                        <h3>{job.title || 'Untitled job'}</h3>
+                        <p>{job.company || 'Company not listed'}</p>
+                      </div>
+                      <span
+                        className={`status-badge status-${getApplicationStatus(
+                          application,
+                        )}`}
+                      >
+                        <CheckCircle2 size={14} />
+                        {getApplicationStatus(application)}
+                      </span>
                     </div>
                     <dl>
                       <div>
                         <dt>Salary</dt>
-                        <dd>{formatSalary(job.salary)}</dd>
+                        <dd>
+                          <DollarSign size={15} />
+                          {formatSalary(job.salary)}
+                        </dd>
                       </div>
                       <div>
                         <dt>Location</dt>
-                        <dd>{job.location || 'Not listed'}</dd>
+                        <dd>
+                          <MapPin size={15} />
+                          {job.location || 'Not listed'}
+                        </dd>
                       </div>
                       <div className="wide-detail">
                         <dt>Application Date</dt>
-                        <dd>{formatApplicationDate(application)}</dd>
+                        <dd>
+                          <CalendarDays size={15} />
+                          {formatApplicationDate(application)}
+                        </dd>
                       </div>
                     </dl>
                   </article>
@@ -2112,6 +2148,13 @@ function App() {
           )}
         </section>
       )}
+      <footer className="app-footer">
+        <div>
+          <strong>Job Portal System</strong>
+          <span>Role-based hiring workspace for seekers and employers.</span>
+        </div>
+        <a href="#jobs">Back to jobs</a>
+      </footer>
       </section>
     </main>
   );
