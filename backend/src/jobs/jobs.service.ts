@@ -34,6 +34,20 @@ export class JobsService {
     return this.jobRepository.find();
   }
 
+  async findMine(user: any) {
+    return this.jobRepository.find({
+      where: {
+        createdBy: {
+          id: user.userId,
+        },
+      },
+      relations: ['createdBy'],
+      order: {
+        id: 'DESC',
+      },
+    });
+  }
+
   async findOne(id: number) {
     return this.jobRepository.findOne({
       where: { id },

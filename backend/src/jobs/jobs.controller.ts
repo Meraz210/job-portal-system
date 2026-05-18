@@ -44,6 +44,13 @@ export class JobsController {
     return this.jobsService.findAll();
   }
 
+  @UseGuards(JwtGuard, RolesGuard)
+  @Roles(Role.EMPLOYER)
+  @Get('my-posted')
+  findMine(@Req() req) {
+    return this.jobsService.findMine(req.user);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.jobsService.findOne(+id);

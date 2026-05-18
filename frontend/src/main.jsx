@@ -2,6 +2,9 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   BriefcaseBusiness,
+  ClipboardList,
+  Trash2,
+  Pencil,
   Eye,
   FilePlus2,
   LogIn,
@@ -48,6 +51,29 @@ function normalizeJobs(data) {
   return [];
 }
 
+function formatApplicationDate(application) {
+  const rawDate =
+    application.createdAt ||
+    application.created_at ||
+    application.appliedAt ||
+    application.applicationDate;
+
+  if (!rawDate) {
+    return 'Date not available';
+  }
+
+  const date = new Date(rawDate);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(rawDate);
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+}
+
 function App() {
   const [email, setEmail] = React.useState('meraz@gmail.com');
   const [password, setPassword] = React.useState('123456');
@@ -58,8 +84,16 @@ function App() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [jobs, setJobs] = React.useState([]);
   const [jobsStatus, setJobsStatus] = React.useState('');
+  const [employerJobs, setEmployerJobs] = React.useState([]);
+  const [employerStatus, setEmployerStatus] = React.useState('');
+  const [isEmployerJobsLoading, setIsEmployerJobsLoading] =
+    React.useState(false);
+  const [applications, setApplications] = React.useState([]);
+  const [applicationsStatus, setApplicationsStatus] = React.useState('');
+  const [isApplicationsLoading, setIsApplicationsLoading] =
+    React.useState(false);
   const [selectedApplicants, setSelectedApplicants] = React.useState(null);
-  const [showCreateJob, setShowCreateJob] = React.useState(false);
+  const [editingJobId, setEditingJobId] = React.useState(null);
   const [jobForm, setJobForm] = React.useState({
     title: '',
     company: '',
@@ -74,6 +108,26 @@ function App() {
   React.useEffect(() => {
     loadJobs();
   }, []);
+
+  React.useEffect(() => {
+    if (token && role === 'seeker') {
+      loadMyApplications(token);
+      return;
+    }
+
+    setApplications([]);
+    setApplicationsStatus('');
+  }, [token, role]);
+
+  React.useEffect(() => {
+    if (token && role === 'employer') {
+      loadEmployerJobs(token);
+      return;
+    }
+
+    setEmployerJobs([]);
+    setEmployerStatus('');
+  }, [token, role]);
 
   async function loadJobs() {
     setJobsStatus('Loading jobs...');
@@ -90,6 +144,68 @@ function App() {
       setJobsStatus('');
     } catch (error) {
       setJobsStatus(error.message);
+    }
+  }
+
+  async function loadMyApplications(activeToken = token) {
+    if (!activeToken) {
+      setApplications([]);
+      setApplicationsStatus('Login to view your applications.');
+      return;
+    }
+
+    setIsApplicationsLoading(true);
+    setApplicationsStatus('');
+
+    try {
+      const response = await fetch(`${API_URL}/applications/my`, {
+        headers: {
+          Authorization: `Bearer ${activeToken}`,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not load applications');
+      }
+
+      setApplications(normalizeJobs(data));
+    } catch (error) {
+      setApplications([]);
+      setApplicationsStatus(error.message);
+    } finally {
+      setIsApplicationsLoading(false);
+    }
+  }
+
+  async function loadEmployerJobs(activeToken = token) {
+    if (!activeToken) {
+      setEmployerJobs([]);
+      setEmployerStatus('Login as an employer to view posted jobs.');
+      return;
+    }
+
+    setIsEmployerJobsLoading(true);
+    setEmployerStatus('');
+
+    try {
+      const response = await fetch(`${API_URL}/jobs/my-posted`, {
+        headers: {
+          Authorization: `Bearer ${activeToken}`,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not load posted jobs');
+      }
+
+      setEmployerJobs(normalizeJobs(data));
+    } catch (error) {
+      setEmployerJobs([]);
+      setEmployerStatus(error.message);
+    } finally {
+      setIsEmployerJobsLoading(false);
     }
   }
 
@@ -120,6 +236,13 @@ function App() {
       setToken(data.access_token);
       setStatus('Login successful. Token saved.');
       await loadJobs();
+      const loggedInUser = decodeJwt(data.access_token);
+      if (loggedInUser?.role === 'seeker') {
+        await loadMyApplications(data.access_token);
+      }
+      if (loggedInUser?.role === 'employer') {
+        await loadEmployerJobs(data.access_token);
+      }
     } catch (error) {
       setStatus(error.message);
     } finally {
@@ -130,34 +253,62 @@ function App() {
   async function handleCreateJob(event) {
     event.preventDefault();
     setJobsStatus('');
+    setEmployerStatus('');
 
     try {
-      const response = await fetch(`${API_URL}/jobs`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const isEditing = Boolean(editingJobId);
+      const response = await fetch(
+        `${API_URL}/jobs${isEditing ? `/${editingJobId}` : ''}`,
+        {
+          method: isEditing ? 'PATCH' : 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(jobForm),
         },
-        body: JSON.stringify(jobForm),
-      });
+      );
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Could not create job');
+        throw new Error(
+          data.message || `Could not ${isEditing ? 'update' : 'create'} job`,
+        );
       }
 
-      setJobForm({
-        title: '',
-        company: '',
-        location: '',
-        salary: '',
-        description: '',
-      });
-      setJobsStatus('Job created.');
+      resetJobForm();
+      setJobsStatus(isEditing ? 'Job updated.' : 'Job created.');
+      setEmployerStatus(isEditing ? 'Job updated.' : 'Job created.');
       await loadJobs();
+      if (role === 'employer') {
+        await loadEmployerJobs();
+      }
     } catch (error) {
-      setJobsStatus(error.message);
+      setEmployerStatus(error.message);
     }
+  }
+
+  function startEditingJob(job) {
+    setEditingJobId(job.id);
+    setEmployerStatus('');
+    setJobForm({
+      title: job.title || '',
+      company: job.company || '',
+      location: job.location || '',
+      salary: job.salary || '',
+      description: job.description || '',
+    });
+  }
+
+  function resetJobForm() {
+    setEditingJobId(null);
+    setJobForm({
+      title: '',
+      company: '',
+      location: '',
+      salary: '',
+      description: '',
+    });
   }
 
   async function handleApply(jobId) {
@@ -179,6 +330,7 @@ function App() {
       }
 
       setJobsStatus('Application submitted.');
+      await loadMyApplications();
     } catch (error) {
       setJobsStatus(error.message);
     }
@@ -208,9 +360,49 @@ function App() {
     }
   }
 
+  async function handleDeleteJob(job) {
+    if (role !== 'employer') {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete "${job.title}" from your posted jobs?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setEmployerStatus('');
+
+    try {
+      const response = await fetch(`${API_URL}/jobs/${job.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not delete job');
+      }
+
+      setEmployerStatus('Job deleted.');
+      await loadEmployerJobs();
+      await loadJobs();
+    } catch (error) {
+      setEmployerStatus(error.message);
+    }
+  }
+
   function handleLogout() {
     localStorage.removeItem('access_token');
     setToken(null);
+    setApplications([]);
+    setApplicationsStatus('');
+    setEmployerJobs([]);
+    setEmployerStatus('');
     setStatus('Logged out.');
   }
 
@@ -292,6 +484,143 @@ function App() {
         </div>
       </section>
 
+      {role === 'employer' && (
+        <section className="employer-dashboard">
+          <div className="dashboard-header">
+            <div>
+              <h2>Employer Dashboard</h2>
+              <p>Manage your posted jobs and publish new openings.</p>
+            </div>
+            <button
+              className="secondary-button"
+              onClick={() => loadEmployerJobs()}
+              disabled={isEmployerJobsLoading}
+            >
+              <BriefcaseBusiness size={18} />
+              {isEmployerJobsLoading ? 'Loading...' : 'Refresh Jobs'}
+            </button>
+          </div>
+
+          <div className="dashboard-grid">
+            <section className="dashboard-panel">
+              <div className="panel-header compact">
+                <BriefcaseBusiness size={20} />
+                <h2>My Posted Jobs</h2>
+              </div>
+
+              {employerStatus && (
+                <p className="status-text">{employerStatus}</p>
+              )}
+
+              {isEmployerJobsLoading && !employerStatus && (
+                <p className="empty-state">Loading posted jobs...</p>
+              )}
+
+              {!isEmployerJobsLoading &&
+                !employerStatus &&
+                employerJobs.length === 0 && (
+                  <p className="empty-state">No posted jobs yet.</p>
+                )}
+
+              {employerJobs.length > 0 && (
+                <div className="posted-job-list">
+                  {employerJobs.map((job) => (
+                    <article className="posted-job-card" key={job.id}>
+                      <div className="posted-job-heading">
+                        <div>
+                          <h3>{job.title}</h3>
+                          <p>{job.company}</p>
+                        </div>
+                        <button
+                          className="secondary-button icon-button"
+                          type="button"
+                          onClick={() => startEditingJob(job)}
+                          aria-label={`Edit ${job.title}`}
+                          title="Edit job"
+                        >
+                          <Pencil size={18} />
+                        </button>
+                        <button
+                          className="danger-button icon-button"
+                          type="button"
+                          onClick={() => handleDeleteJob(job)}
+                          aria-label={`Delete ${job.title}`}
+                          title="Delete job"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                      <dl>
+                        <div>
+                          <dt>Location</dt>
+                          <dd>{job.location}</dd>
+                        </div>
+                        <div>
+                          <dt>Salary</dt>
+                          <dd>{job.salary}</dd>
+                        </div>
+                      </dl>
+                      <p className="job-description">{job.description}</p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="dashboard-panel">
+              <div className="panel-header compact">
+                {editingJobId ? <Pencil size={20} /> : <FilePlus2 size={20} />}
+                <h2>{editingJobId ? 'Edit Job' : 'Create New Job'}</h2>
+              </div>
+
+              <form className="dashboard-job-form" onSubmit={handleCreateJob}>
+                {['title', 'company', 'location', 'salary'].map((field) => (
+                  <label key={field}>
+                    {field[0].toUpperCase() + field.slice(1)}
+                    <input
+                      value={jobForm[field]}
+                      onChange={(event) =>
+                        setJobForm({
+                          ...jobForm,
+                          [field]: event.target.value,
+                        })
+                      }
+                      required
+                    />
+                  </label>
+                ))}
+                <label>
+                  Description
+                  <textarea
+                    value={jobForm.description}
+                    onChange={(event) =>
+                      setJobForm({
+                        ...jobForm,
+                        description: event.target.value,
+                      })
+                    }
+                    required
+                  />
+                </label>
+                <button type="submit">
+                  {editingJobId ? <Pencil size={18} /> : <FilePlus2 size={18} />}
+                  {editingJobId ? 'Update Job' : 'Create Job'}
+                </button>
+                {editingJobId && (
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={resetJobForm}
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+              </form>
+            </section>
+          </div>
+        </section>
+      )}
+
       <section className="jobs-layout">
         <div className="jobs-header">
           <div>
@@ -299,63 +628,11 @@ function App() {
             <p>Browse open roles from the backend API.</p>
           </div>
           <div className="jobs-actions">
-            {role === 'employer' && (
-              <button
-                type="button"
-                onClick={() => setShowCreateJob((current) => !current)}
-              >
-                <FilePlus2 size={18} />
-                Create Job
-              </button>
-            )}
             <button className="secondary-button" onClick={loadJobs}>
               Refresh
             </button>
           </div>
         </div>
-
-        {role === 'employer' && showCreateJob && (
-          <form className="create-job-panel" onSubmit={handleCreateJob}>
-            <div className="panel-header compact">
-              <FilePlus2 size={20} />
-              <h2>Create Job</h2>
-            </div>
-            <div className="job-form-grid">
-              {['title', 'company', 'location', 'salary'].map((field) => (
-                <label key={field}>
-                  {field[0].toUpperCase() + field.slice(1)}
-                  <input
-                    value={jobForm[field]}
-                    onChange={(event) =>
-                      setJobForm({
-                        ...jobForm,
-                        [field]: event.target.value,
-                      })
-                    }
-                    required
-                  />
-                </label>
-              ))}
-              <label className="wide-field">
-                Description
-                <textarea
-                  value={jobForm.description}
-                  onChange={(event) =>
-                    setJobForm({
-                      ...jobForm,
-                      description: event.target.value,
-                    })
-                  }
-                  required
-                />
-              </label>
-            </div>
-            <button type="submit">
-              <FilePlus2 size={18} />
-              Create Job
-            </button>
-          </form>
-        )}
 
         {jobsStatus && <p className="status-text">{jobsStatus}</p>}
 
@@ -424,6 +701,70 @@ function App() {
           </div>
         )}
       </section>
+
+      {role === 'seeker' && (
+        <section className="applications-section">
+          <div className="jobs-header">
+            <div>
+              <h2>My Applications</h2>
+              <p>Track the roles you have applied to.</p>
+            </div>
+            <button
+              className="secondary-button"
+              onClick={() => loadMyApplications()}
+              disabled={isApplicationsLoading}
+            >
+              <ClipboardList size={18} />
+              {isApplicationsLoading ? 'Loading...' : 'Refresh'}
+            </button>
+          </div>
+
+          {applicationsStatus && (
+            <p className="status-text">{applicationsStatus}</p>
+          )}
+
+          {isApplicationsLoading && !applicationsStatus && (
+            <p className="empty-state">Loading applications...</p>
+          )}
+
+          {!isApplicationsLoading &&
+            !applicationsStatus &&
+            applications.length === 0 && (
+              <p className="empty-state">No applications yet</p>
+            )}
+
+          {applications.length > 0 && (
+            <div className="application-grid">
+              {applications.map((application) => {
+                const job = application.job || {};
+
+                return (
+                  <article className="application-card" key={application.id}>
+                    <div>
+                      <h3>{job.title || 'Untitled job'}</h3>
+                      <p>{job.company || 'Company not listed'}</p>
+                    </div>
+                    <dl>
+                      <div>
+                        <dt>Salary</dt>
+                        <dd>{job.salary || 'Not listed'}</dd>
+                      </div>
+                      <div>
+                        <dt>Location</dt>
+                        <dd>{job.location || 'Not listed'}</dd>
+                      </div>
+                      <div className="wide-detail">
+                        <dt>Application Date</dt>
+                        <dd>{formatApplicationDate(application)}</dd>
+                      </div>
+                    </dl>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
     </main>
   );
 }
