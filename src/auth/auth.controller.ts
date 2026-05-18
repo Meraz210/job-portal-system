@@ -22,6 +22,13 @@ export class AuthController {
     );
   }
 
+  @Post('register/employer')
+  registerEmployer(@Body() registerDto: RegisterDto) {
+    return this.authService.registerEmployer(
+      registerDto,
+    );
+  }
+
   @Post('login')
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
