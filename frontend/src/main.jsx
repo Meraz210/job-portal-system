@@ -89,6 +89,12 @@ function App() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [jobs, setJobs] = React.useState([]);
   const [jobsStatus, setJobsStatus] = React.useState('');
+  const [isJobsLoading, setIsJobsLoading] = React.useState(false);
+  const [jobFilters, setJobFilters] = React.useState({
+    search: '',
+    location: '',
+    company: '',
+  });
   const [employerJobs, setEmployerJobs] = React.useState([]);
   const [employerStatus, setEmployerStatus] = React.useState('');
   const [isEmployerJobsLoading, setIsEmployerJobsLoading] =
@@ -117,6 +123,14 @@ function App() {
   }, []);
 
   React.useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      loadJobs(jobFilters);
+    }, 350);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [jobFilters]);
+
+  React.useEffect(() => {
     if (token && role === 'seeker') {
       loadMyApplications(token);
       return;
@@ -136,11 +150,25 @@ function App() {
     setEmployerStatus('');
   }, [token, role]);
 
-  async function loadJobs() {
+  async function loadJobs(filters = jobFilters) {
     setJobsStatus('Loading jobs...');
+    setIsJobsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/jobs`);
+      const params = new URLSearchParams();
+
+      Object.entries(filters).forEach(([key, value]) => {
+        const trimmedValue = value.trim();
+
+        if (trimmedValue) {
+          params.set(key, trimmedValue);
+        }
+      });
+
+      const query = params.toString();
+      const response = await fetch(
+        `${API_URL}/jobs${query ? `?${query}` : ''}`,
+      );
       const data = await response.json();
 
       if (!response.ok) {
@@ -151,7 +179,24 @@ function App() {
       setJobsStatus('');
     } catch (error) {
       setJobsStatus(error.message);
+    } finally {
+      setIsJobsLoading(false);
     }
+  }
+
+  function updateJobFilter(field, value) {
+    setJobFilters((currentFilters) => ({
+      ...currentFilters,
+      [field]: value,
+    }));
+  }
+
+  function clearJobFilters() {
+    setJobFilters({
+      search: '',
+      location: '',
+      company: '',
+    });
   }
 
   async function loadMyApplications(activeToken = token) {
@@ -684,10 +729,54 @@ function App() {
             <p>Browse open roles from the backend API.</p>
           </div>
           <div className="jobs-actions">
-            <button className="secondary-button" onClick={loadJobs}>
-              Refresh
+            <button
+              className="secondary-button"
+              onClick={() => loadJobs()}
+              disabled={isJobsLoading}
+            >
+              {isJobsLoading ? 'Loading...' : 'Refresh'}
             </button>
           </div>
+        </div>
+
+        <div className="job-filter-panel">
+          <label>
+            Search
+            <input
+              value={jobFilters.search}
+              onChange={(event) =>
+                updateJobFilter('search', event.target.value)
+              }
+              placeholder="Title, company, location, or description"
+            />
+          </label>
+          <label>
+            Location
+            <input
+              value={jobFilters.location}
+              onChange={(event) =>
+                updateJobFilter('location', event.target.value)
+              }
+              placeholder="Dhaka"
+            />
+          </label>
+          <label>
+            Company
+            <input
+              value={jobFilters.company}
+              onChange={(event) =>
+                updateJobFilter('company', event.target.value)
+              }
+              placeholder="Company name"
+            />
+          </label>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={clearJobFilters}
+          >
+            Clear
+          </button>
         </div>
 
         {jobsStatus && <p className="status-text">{jobsStatus}</p>}
@@ -729,8 +818,8 @@ function App() {
           ))}
         </div>
 
-        {jobs.length === 0 && !jobsStatus && (
-          <p className="empty-state">No jobs found yet.</p>
+        {jobs.length === 0 && !jobsStatus && !isJobsLoading && (
+          <p className="empty-state">No jobs found</p>
         )}
 
         {selectedApplicants && (

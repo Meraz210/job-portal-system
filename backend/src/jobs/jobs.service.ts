@@ -10,6 +10,12 @@ import { Job } from './entities/job.entity';
 import { CreateJobDto } from './dto/create-job.dto';
 import { UpdateJobDto } from './dto/update-job.dto';
 
+export interface JobFilters {
+  search?: string;
+  location?: string;
+  company?: string;
+}
+
 @Injectable()
 export class JobsService {
   constructor(
@@ -31,8 +37,36 @@ export class JobsService {
     return this.jobRepository.save(job);
   }
 
-  async findAll() {
-    return this.jobRepository.find();
+  async findAll(filters: JobFilters = {}) {
+    const query =
+      this.jobRepository.createQueryBuilder('job');
+
+    const search = filters.search?.trim();
+    const location = filters.location?.trim();
+    const company = filters.company?.trim();
+
+    if (search) {
+      query.andWhere(
+        '(LOWER(job.title) LIKE :search OR LOWER(job.company) LIKE :search OR LOWER(job.description) LIKE :search OR LOWER(job.location) LIKE :search)',
+        { search: `%${search.toLowerCase()}%` },
+      );
+    }
+
+    if (location) {
+      query.andWhere(
+        'LOWER(job.location) LIKE :location',
+        { location: `%${location.toLowerCase()}%` },
+      );
+    }
+
+    if (company) {
+      query.andWhere(
+        'LOWER(job.company) LIKE :company',
+        { company: `%${company.toLowerCase()}%` },
+      );
+    }
+
+    return query.orderBy('job.id', 'DESC').getMany();
   }
 
   async findMine(user: any) {

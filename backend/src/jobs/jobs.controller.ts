@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -40,8 +41,16 @@ export class JobsController {
   }
 
   @Get()
-  findAll() {
-    return this.jobsService.findAll();
+  findAll(
+    @Query('search') search?: string,
+    @Query('location') location?: string,
+    @Query('company') company?: string,
+  ) {
+    return this.jobsService.findAll({
+      search,
+      location,
+      company,
+    });
   }
 
   @UseGuards(JwtGuard, RolesGuard)
