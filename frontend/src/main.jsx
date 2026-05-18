@@ -15,13 +15,37 @@ const API_URL = 'http://localhost:8000';
 function decodeJwt(token) {
   try {
     const payload = token.split('.')[1];
+    if (!payload) {
+      return null;
+    }
+
     const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const decoded = atob(normalized);
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      '=',
+    );
+    const decoded = atob(padded);
 
     return JSON.parse(decoded);
   } catch {
     return null;
   }
+}
+
+function normalizeJobs(data) {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data?.value)) {
+    return data.value;
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data;
+  }
+
+  return [];
 }
 
 function App() {
@@ -35,6 +59,7 @@ function App() {
   const [jobs, setJobs] = React.useState([]);
   const [jobsStatus, setJobsStatus] = React.useState('');
   const [selectedApplicants, setSelectedApplicants] = React.useState(null);
+  const [showCreateJob, setShowCreateJob] = React.useState(false);
   const [jobForm, setJobForm] = React.useState({
     title: '',
     company: '',
@@ -61,7 +86,7 @@ function App() {
         throw new Error(data.message || 'Could not load jobs');
       }
 
-      setJobs(Array.isArray(data) ? data : data.value || []);
+      setJobs(normalizeJobs(data));
       setJobsStatus('');
     } catch (error) {
       setJobsStatus(error.message);
@@ -176,7 +201,7 @@ function App() {
 
       setSelectedApplicants({
         jobId,
-        applicants: Array.isArray(data) ? data : data.value || [],
+        applicants: normalizeJobs(data),
       });
     } catch (error) {
       setJobsStatus(error.message);
@@ -273,12 +298,23 @@ function App() {
             <h2>Jobs</h2>
             <p>Browse open roles from the backend API.</p>
           </div>
-          <button className="secondary-button" onClick={loadJobs}>
-            Refresh
-          </button>
+          <div className="jobs-actions">
+            {role === 'employer' && (
+              <button
+                type="button"
+                onClick={() => setShowCreateJob((current) => !current)}
+              >
+                <FilePlus2 size={18} />
+                Create Job
+              </button>
+            )}
+            <button className="secondary-button" onClick={loadJobs}>
+              Refresh
+            </button>
+          </div>
         </div>
 
-        {role === 'employer' && (
+        {role === 'employer' && showCreateJob && (
           <form className="create-job-panel" onSubmit={handleCreateJob}>
             <div className="panel-header compact">
               <FilePlus2 size={20} />
@@ -302,7 +338,7 @@ function App() {
               ))}
               <label className="wide-field">
                 Description
-                <input
+                <textarea
                   value={jobForm.description}
                   onChange={(event) =>
                     setJobForm({
@@ -374,9 +410,11 @@ function App() {
               <div className="applicant-list">
                 {selectedApplicants.applicants.map((application) => (
                   <div className="applicant-row" key={application.id}>
-                    <strong>{application.applicant.fullName}</strong>
-                    <span>{application.applicant.email}</span>
-                    <span>{application.applicant.role}</span>
+                    <strong>
+                      {application.applicant?.fullName || 'Unknown applicant'}
+                    </strong>
+                    <span>{application.applicant?.email || 'No email'}</span>
+                    <span>{application.applicant?.role || 'seeker'}</span>
                   </div>
                 ))}
               </div>

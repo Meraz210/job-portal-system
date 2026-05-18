@@ -219,6 +219,14 @@ button:disabled {
   margin-top: 4px;
 }
 
+.jobs-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .create-job-panel,
 .applicants-panel {
   padding: 20px;
@@ -336,5 +344,13 @@ button:disabled {
   .jobs-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .jobs-actions {
+    justify-content: stretch;
+  }
+
+  .jobs-actions button {
+    flex: 1 1 160px;
   }
 }
