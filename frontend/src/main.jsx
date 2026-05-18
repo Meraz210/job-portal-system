@@ -162,6 +162,11 @@ function App() {
   const [jobs, setJobs] = React.useState([]);
   const [jobsStatus, setJobsStatus] = React.useState('');
   const [isJobsLoading, setIsJobsLoading] = React.useState(false);
+  const [adminUsers, setAdminUsers] = React.useState([]);
+  const [adminJobs, setAdminJobs] = React.useState([]);
+  const [adminApplications, setAdminApplications] = React.useState([]);
+  const [adminStatus, setAdminStatus] = React.useState('');
+  const [isAdminLoading, setIsAdminLoading] = React.useState(false);
   const [jobFilters, setJobFilters] = React.useState({
     search: '',
     location: '',
@@ -233,6 +238,18 @@ function App() {
 
     setEmployerJobs([]);
     setEmployerStatus('');
+  }, [token, role]);
+
+  React.useEffect(() => {
+    if (token && role === 'admin') {
+      loadAdminDashboard(token);
+      return;
+    }
+
+    setAdminUsers([]);
+    setAdminJobs([]);
+    setAdminApplications([]);
+    setAdminStatus('');
   }, [token, role]);
 
   async function loadJobs(filters = jobFilters) {
@@ -356,6 +373,66 @@ function App() {
     }
   }
 
+  async function loadAdminDashboard(activeToken = token) {
+    if (!activeToken) {
+      setAdminStatus('Login as an admin to view admin dashboard.');
+      return;
+    }
+
+    setIsAdminLoading(true);
+    setAdminStatus('');
+
+    try {
+      const headers = {
+        Authorization: `Bearer ${activeToken}`,
+      };
+      const [usersResponse, jobsResponse, applicationsResponse] =
+        await Promise.all([
+          fetch(`${API_URL}/admin/users`, { headers }),
+          fetch(`${API_URL}/admin/jobs`, { headers }),
+          fetch(`${API_URL}/admin/applications`, { headers }),
+        ]);
+
+      if (
+        usersResponse.status === 401 ||
+        jobsResponse.status === 401 ||
+        applicationsResponse.status === 401
+      ) {
+        expireSession();
+        return;
+      }
+
+      const [usersData, jobsData, applicationsData] =
+        await Promise.all([
+          usersResponse.json(),
+          jobsResponse.json(),
+          applicationsResponse.json(),
+        ]);
+
+      if (!usersResponse.ok) {
+        throw new Error(usersData.message || 'Could not load users');
+      }
+
+      if (!jobsResponse.ok) {
+        throw new Error(jobsData.message || 'Could not load admin jobs');
+      }
+
+      if (!applicationsResponse.ok) {
+        throw new Error(
+          applicationsData.message || 'Could not load applications',
+        );
+      }
+
+      setAdminUsers(normalizeJobs(usersData));
+      setAdminJobs(normalizeJobs(jobsData));
+      setAdminApplications(normalizeJobs(applicationsData));
+    } catch (error) {
+      setAdminStatus(error.message);
+    } finally {
+      setIsAdminLoading(false);
+    }
+  }
+
   async function handleLogin(event) {
     event.preventDefault();
     setIsLoading(true);
@@ -393,6 +470,9 @@ function App() {
       }
       if (loggedInUser?.role === 'employer') {
         await loadEmployerJobs(data.access_token);
+      }
+      if (loggedInUser?.role === 'admin') {
+        await loadAdminDashboard(data.access_token);
       }
     } catch (error) {
       setStatus(error.message);
@@ -621,6 +701,76 @@ function App() {
     }
   }
 
+  async function handleAdminDeleteUser(userId) {
+    const confirmed = window.confirm('Delete this user and related data?');
+
+    if (!confirmed) {
+      return;
+    }
+
+    setAdminStatus('');
+
+    try {
+      const response = await fetch(`${API_URL}/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+
+      if (response.status === 401) {
+        expireSession();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not delete user');
+      }
+
+      setAdminStatus('User deleted.');
+      await loadAdminDashboard();
+      await loadJobs();
+    } catch (error) {
+      setAdminStatus(error.message);
+    }
+  }
+
+  async function handleAdminDeleteJob(jobId) {
+    const confirmed = window.confirm('Delete this job and related applications?');
+
+    if (!confirmed) {
+      return;
+    }
+
+    setAdminStatus('');
+
+    try {
+      const response = await fetch(`${API_URL}/admin/jobs/${jobId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+
+      if (response.status === 401) {
+        expireSession();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not delete job');
+      }
+
+      setAdminStatus('Job deleted.');
+      await loadAdminDashboard();
+      await loadJobs();
+    } catch (error) {
+      setAdminStatus(error.message);
+    }
+  }
+
   function clearSession() {
     localStorage.removeItem('access_token');
     setToken(null);
@@ -635,6 +785,10 @@ function App() {
     setApplicationsStatus('');
     setEmployerJobs([]);
     setEmployerStatus('');
+    setAdminUsers([]);
+    setAdminJobs([]);
+    setAdminApplications([]);
+    setAdminStatus('');
     setSelectedApplicants(null);
     setApplicantsStatus('');
     resetJobForm();
@@ -765,6 +919,12 @@ function App() {
               </a>
             </>
           )}
+          {role === 'admin' && (
+            <a href="#admin-dashboard">
+              <ShieldCheck size={18} />
+              Admin Dashboard
+            </a>
+          )}
         </nav>
       </aside>
 
@@ -772,7 +932,13 @@ function App() {
         <header className="app-topbar">
           <div>
             <p className="eyebrow">Dashboard</p>
-            <h1>{role === 'employer' ? 'Employer Console' : 'Job Seeker Hub'}</h1>
+              <h1>
+                {role === 'employer'
+                  ? 'Employer Console'
+                  : role === 'admin'
+                    ? 'Admin Console'
+                    : 'Job Seeker Hub'}
+              </h1>
           </div>
           <div className="profile-card">
             <div className="profile-avatar">
@@ -795,6 +961,8 @@ function App() {
             <h2>
               {role === 'employer'
                 ? 'Manage postings, applicants, and hiring decisions.'
+                : role === 'admin'
+                  ? 'Monitor users, jobs, and applications from one control panel.'
                 : 'Search jobs, apply faster, and track every application.'}
             </h2>
           </div>
@@ -814,6 +982,18 @@ function App() {
                 <span>Posted Jobs</span>
                 <strong>{employerJobs.length}</strong>
               </div>
+            )}
+            {role === 'admin' && (
+              <>
+                <div>
+                  <span>Total Users</span>
+                  <strong>{adminUsers.length}</strong>
+                </div>
+                <div>
+                  <span>Applications</span>
+                  <strong>{adminApplications.length}</strong>
+                </div>
+              </>
             )}
           </div>
         </section>
@@ -851,6 +1031,12 @@ function App() {
                 <strong>{employerJobs.length}</strong>
               </div>
             )}
+            {role === 'admin' && (
+              <div>
+                <span>Total Users</span>
+                <strong>{adminUsers.length}</strong>
+              </div>
+            )}
           </div>
         </div>
 
@@ -885,6 +1071,153 @@ function App() {
           )}
         </div>
       </section>
+
+      {role === 'admin' && (
+        <section className="admin-dashboard" id="admin-dashboard">
+          <div className="dashboard-header">
+            <div>
+              <h2>Admin Dashboard</h2>
+              <p>Review users, jobs, and applications across the platform.</p>
+            </div>
+            <button
+              className="secondary-button"
+              onClick={() => loadAdminDashboard()}
+              disabled={isAdminLoading}
+            >
+              <ShieldCheck size={18} />
+              {isAdminLoading ? 'Loading...' : 'Refresh Admin Data'}
+            </button>
+          </div>
+
+          <div className="admin-summary-grid">
+            <div>
+              <span>Total Users</span>
+              <strong>{adminUsers.length}</strong>
+            </div>
+            <div>
+              <span>Total Jobs</span>
+              <strong>{adminJobs.length}</strong>
+            </div>
+            <div>
+              <span>Total Applications</span>
+              <strong>{adminApplications.length}</strong>
+            </div>
+          </div>
+
+          {adminStatus && (
+            <p className={getStatusClass(adminStatus)}>{adminStatus}</p>
+          )}
+
+          {isAdminLoading && !adminStatus && (
+            <p className="empty-state">Loading admin dashboard...</p>
+          )}
+
+          <div className="admin-table-grid">
+            <section className="dashboard-panel">
+              <div className="panel-header compact">
+                <UserRound size={20} />
+                <h2>Users</h2>
+              </div>
+              {adminUsers.length === 0 && !isAdminLoading ? (
+                <p className="empty-state">No users found.</p>
+              ) : (
+                <div className="admin-table">
+                  <div className="admin-table-head users-table">
+                    <span>Name</span>
+                    <span>Email</span>
+                    <span>Role</span>
+                    <span>Action</span>
+                  </div>
+                  {adminUsers.map((adminUser) => (
+                    <div className="admin-row users-table" key={adminUser.id}>
+                      <strong>{adminUser.fullName}</strong>
+                      <span>{adminUser.email}</span>
+                      <span>{adminUser.role}</span>
+                      <button
+                        className="danger-button icon-button"
+                        type="button"
+                        onClick={() => handleAdminDeleteUser(adminUser.id)}
+                        aria-label={`Delete ${adminUser.fullName}`}
+                        title="Delete user"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="dashboard-panel">
+              <div className="panel-header compact">
+                <BriefcaseBusiness size={20} />
+                <h2>Jobs</h2>
+              </div>
+              {adminJobs.length === 0 && !isAdminLoading ? (
+                <p className="empty-state">No jobs found.</p>
+              ) : (
+                <div className="admin-table">
+                  <div className="admin-table-head jobs-table">
+                    <span>Title</span>
+                    <span>Company</span>
+                    <span>Location</span>
+                    <span>Action</span>
+                  </div>
+                  {adminJobs.map((job) => (
+                    <div className="admin-row jobs-table" key={job.id}>
+                      <strong>{job.title}</strong>
+                      <span>{job.company}</span>
+                      <span>{job.location}</span>
+                      <button
+                        className="danger-button icon-button"
+                        type="button"
+                        onClick={() => handleAdminDeleteJob(job.id)}
+                        aria-label={`Delete ${job.title}`}
+                        title="Delete job"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="dashboard-panel admin-wide-panel">
+              <div className="panel-header compact">
+                <ClipboardList size={20} />
+                <h2>Applications</h2>
+              </div>
+              {adminApplications.length === 0 && !isAdminLoading ? (
+                <p className="empty-state">No applications found.</p>
+              ) : (
+                <div className="admin-table">
+                  <div className="admin-table-head applications-table">
+                    <span>Applicant</span>
+                    <span>Email</span>
+                    <span>Job</span>
+                    <span>Status</span>
+                  </div>
+                  {adminApplications.map((application) => (
+                    <div
+                      className="admin-row applications-table"
+                      key={application.id}
+                    >
+                      <strong>
+                        {application.applicant?.fullName ||
+                          'Unknown applicant'}
+                      </strong>
+                      <span>{application.applicant?.email || 'No email'}</span>
+                      <span>{application.job?.title || 'Untitled job'}</span>
+                      <span>{getApplicationStatus(application)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        </section>
+      )}
 
       {role === 'employer' && (
         <section className="employer-dashboard" id="employer-dashboard">

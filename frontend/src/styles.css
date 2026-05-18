@@ -336,6 +336,15 @@ textarea:focus-visible {
   margin-top: 24px;
 }
 
+.admin-dashboard {
+  padding: 26px;
+  margin-top: 24px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
 .brand-row {
   display: flex;
   gap: 14px;
@@ -673,6 +682,93 @@ button:disabled {
   background: var(--surface-muted);
 }
 
+.admin-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.admin-summary-grid div {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border: 1px solid #e5ebef;
+  border-radius: 8px;
+  background: var(--primary-soft);
+}
+
+.admin-summary-grid span {
+  color: #52736e;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-summary-grid strong {
+  color: var(--primary-dark);
+  font-size: 32px;
+  line-height: 1;
+}
+
+.admin-table-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.admin-wide-panel {
+  grid-column: 1 / -1;
+}
+
+.admin-table {
+  display: grid;
+  gap: 10px;
+  padding-top: 16px;
+  overflow-x: auto;
+}
+
+.admin-table-head,
+.admin-row {
+  display: grid;
+  gap: 12px;
+  align-items: center;
+}
+
+.users-table {
+  grid-template-columns: minmax(130px, 1fr) minmax(180px, 1.4fr) minmax(80px, 0.7fr) auto;
+}
+
+.jobs-table {
+  grid-template-columns: minmax(150px, 1.2fr) minmax(130px, 1fr) minmax(100px, 0.8fr) auto;
+}
+
+.applications-table {
+  grid-template-columns: minmax(140px, 1fr) minmax(180px, 1.2fr) minmax(160px, 1.2fr) minmax(100px, 0.7fr);
+}
+
+.admin-table-head {
+  padding: 0 13px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-row {
+  min-height: 52px;
+  padding: 12px 13px;
+  border: 1px solid #e5ebef;
+  border-radius: 7px;
+  background: #ffffff;
+}
+
+.admin-row span {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
 .dashboard-job-form {
   display: grid;
   gap: 14px;
@@ -971,7 +1067,8 @@ button:disabled {
 
   .jobs-layout,
   .applications-section,
-  .employer-dashboard {
+  .employer-dashboard,
+  .admin-dashboard {
     padding: 22px;
   }
 
@@ -1053,11 +1150,29 @@ button:disabled {
     flex-direction: column;
   }
 
+  .admin-summary-grid,
+  .admin-table-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-table-head {
+    display: none;
+  }
+
+  .admin-row,
+  .users-table,
+  .jobs-table,
+  .applications-table {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
   .auth-panel,
   .session-panel,
   .jobs-layout,
   .applications-section,
   .employer-dashboard,
+  .admin-dashboard,
   .dashboard-panel,
   .applicants-panel {
     border-radius: 7px;
