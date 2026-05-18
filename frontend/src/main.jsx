@@ -74,6 +74,10 @@ function formatApplicationDate(application) {
   }).format(date);
 }
 
+function getApplicationStatus(application) {
+  return application.status || application.applicationStatus || 'Not available';
+}
+
 function App() {
   const [email, setEmail] = React.useState('meraz@gmail.com');
   const [password, setPassword] = React.useState('123456');
@@ -93,6 +97,8 @@ function App() {
   const [isApplicationsLoading, setIsApplicationsLoading] =
     React.useState(false);
   const [selectedApplicants, setSelectedApplicants] = React.useState(null);
+  const [applicantsStatus, setApplicantsStatus] = React.useState('');
+  const [isApplicantsLoading, setIsApplicantsLoading] = React.useState(false);
   const [editingJobId, setEditingJobId] = React.useState(null);
   const [jobForm, setJobForm] = React.useState({
     title: '',
@@ -337,7 +343,16 @@ function App() {
   }
 
   async function handleViewApplicants(jobId) {
-    setJobsStatus('');
+    if (role !== 'employer') {
+      return;
+    }
+
+    setApplicantsStatus('');
+    setIsApplicantsLoading(true);
+    setSelectedApplicants({
+      jobId,
+      applicants: [],
+    });
 
     try {
       const response = await fetch(`${API_URL}/applications/job/${jobId}`, {
@@ -356,7 +371,13 @@ function App() {
         applicants: normalizeJobs(data),
       });
     } catch (error) {
-      setJobsStatus(error.message);
+      setSelectedApplicants({
+        jobId,
+        applicants: [],
+      });
+      setApplicantsStatus(error.message);
+    } finally {
+      setIsApplicantsLoading(false);
     }
   }
 
@@ -683,8 +704,26 @@ function App() {
               <Eye size={20} />
               <h2>Applicants for Job #{selectedApplicants.jobId}</h2>
             </div>
-            {selectedApplicants.applicants.length > 0 ? (
-              <div className="applicant-list">
+
+            {isApplicantsLoading && (
+              <p className="empty-state">Loading applicants...</p>
+            )}
+
+            {applicantsStatus && (
+              <p className="status-text">{applicantsStatus}</p>
+            )}
+
+            {!isApplicantsLoading &&
+            !applicantsStatus &&
+            selectedApplicants.applicants.length > 0 ? (
+              <div className="applicant-table">
+                <div className="applicant-table-head">
+                  <span>Full Name</span>
+                  <span>Email</span>
+                  <span>Role</span>
+                  <span>Applied Date</span>
+                  <span>Status</span>
+                </div>
                 {selectedApplicants.applicants.map((application) => (
                   <div className="applicant-row" key={application.id}>
                     <strong>
@@ -692,10 +731,16 @@ function App() {
                     </strong>
                     <span>{application.applicant?.email || 'No email'}</span>
                     <span>{application.applicant?.role || 'seeker'}</span>
+                    <span>{formatApplicationDate(application)}</span>
+                    <span>{getApplicationStatus(application)}</span>
                   </div>
                 ))}
               </div>
-            ) : (
+            ) : null}
+
+            {!isApplicantsLoading &&
+              !applicantsStatus &&
+              selectedApplicants.applicants.length === 0 && (
               <p className="empty-state">No applicants yet.</p>
             )}
           </div>

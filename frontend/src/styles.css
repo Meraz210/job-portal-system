@@ -414,17 +414,31 @@ button:disabled {
   grid-column: 1 / -1;
 }
 
-.applicant-list {
+.applicant-table {
   display: grid;
   gap: 10px;
   padding-top: 16px;
 }
 
+.applicant-table-head,
 .applicant-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto;
+  grid-template-columns:
+    minmax(120px, 1.1fr) minmax(160px, 1.4fr) minmax(80px, 0.7fr)
+    minmax(140px, 1fr) minmax(110px, 0.8fr);
   gap: 12px;
   align-items: center;
+}
+
+.applicant-table-head {
+  padding: 0 13px;
+  color: #687985;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.applicant-row {
   padding: 13px;
   border: 1px solid #e1e8ed;
   border-radius: 6px;
@@ -445,6 +459,10 @@ button:disabled {
   .applicant-row {
     grid-template-columns: 1fr;
     align-items: start;
+  }
+
+  .applicant-table-head {
+    display: none;
   }
 
   .auth-panel,
