@@ -27,6 +27,12 @@ import {
   Users,
 } from 'lucide-react';
 import './styles.css';
+import backendDeveloperImage from './assets/images/backend-developer.png';
+import digitalMarketingImage from './assets/images/digital-marketing.png';
+import frontendDeveloperImage from './assets/images/frontend-developer.png';
+import jobPortalImage from './assets/images/job-portal.png';
+import qaImage from './assets/images/qa.png';
+import reactDeveloperImage from './assets/images/react-developer.png';
 
 const API_URL = 'http://localhost:8000';
 const APPLICATION_STATUSES = ['pending', 'accepted', 'rejected'];
@@ -152,15 +158,27 @@ function getCompanyInitials(company = '') {
 function getJobImage(job) {
   const text = `${job.title || ''} ${job.description || ''}`.toLowerCase();
 
+  if (text.includes('digital marketing') || text.includes('seo')) {
+    return digitalMarketingImage;
+  }
+
+  if (
+    text.includes('qa') ||
+    text.includes('quality assurance') ||
+    text.includes('testing')
+  ) {
+    return qaImage;
+  }
+
   if (text.includes('react')) {
-    return '/images/react-developer.png';
+    return reactDeveloperImage;
   }
 
   if (text.includes('backend') || text.includes('back-end')) {
-    return '/images/backend-developer.png';
+    return backendDeveloperImage;
   }
 
-  return '/images/frontend-developer.png';
+  return frontendDeveloperImage;
 }
 
 function formatSalary(salary = '') {
@@ -1148,7 +1166,7 @@ function App() {
             </div>
             <div className="landing-illustration-card">
               <img
-                src="/images/job-portal.png"
+                src={jobPortalImage}
                 alt="Job portal hiring illustration"
                 className="landing-illustration"
               />
@@ -1556,18 +1574,31 @@ function App() {
         </div>
 
         <div className="session-chip-panel">
+          <div className="session-panel-header">
+            <div>
+              <span>Account Session</span>
+              <strong>Active profile</strong>
+            </div>
+            <span className="session-status">Online</span>
+          </div>
           <div className="session-chip">
-            <ShieldCheck size={20} />
+            <span className="session-chip-icon">
+              <ShieldCheck size={18} />
+            </span>
             <div>
               <span>Signed in as</span>
               <strong>{user.email}</strong>
             </div>
           </div>
           <div className="session-chip">
-            <UserRound size={20} />
+            <span className="session-chip-icon">
+              <UserRound size={18} />
+            </span>
             <div>
               <span>Role</span>
-              <strong>{user.role}</strong>
+              <strong className={`session-role role-${role || 'unknown'}`}>
+                {user.role}
+              </strong>
             </div>
           </div>
         </div>
