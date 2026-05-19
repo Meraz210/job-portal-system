@@ -12,9 +12,12 @@ import {
   Pencil,
   Eye,
   FilePlus2,
+  Info,
   LayoutDashboard,
+  LockKeyhole,
   LogIn,
   LogOut,
+  Mail,
   MapPin,
   Search,
   Send,
@@ -223,6 +226,7 @@ function App() {
   const [fullName, setFullName] = React.useState('');
   const [signupRole, setSignupRole] = React.useState('seeker');
   const [authMode, setAuthMode] = React.useState('login');
+  const [formErrors, setFormErrors] = React.useState({});
   const [token, setToken] = React.useState(() =>
     localStorage.getItem('access_token'),
   );
@@ -513,6 +517,14 @@ function App() {
 
   async function handleLogin(event) {
     event.preventDefault();
+    const validationErrors = validateAuthForm('login');
+
+    if (Object.keys(validationErrors).length) {
+      setFormErrors(validationErrors);
+      setStatus('Please fix the highlighted fields.');
+      return;
+    }
+
     setIsLoading(true);
     setStatus('');
 
@@ -540,7 +552,7 @@ function App() {
 
       localStorage.setItem('access_token', data.access_token);
       setToken(data.access_token);
-      setStatus('');
+      setStatus('Login successful. Loading your workspace...');
       await loadJobs();
       const loggedInUser = decodeJwt(data.access_token);
       if (loggedInUser?.role === 'seeker') {
@@ -561,6 +573,14 @@ function App() {
 
   async function handleSignup(event) {
     event.preventDefault();
+    const validationErrors = validateAuthForm('signup');
+
+    if (Object.keys(validationErrors).length) {
+      setFormErrors(validationErrors);
+      setStatus('Please fix the highlighted fields.');
+      return;
+    }
+
     setIsLoading(true);
     setStatus('');
 
@@ -588,12 +608,42 @@ function App() {
 
       setStatus('Account created. Please login.');
       setAuthMode('login');
+      setFormErrors({});
       setFullName('');
     } catch (error) {
       setStatus(error.message);
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function validateAuthForm(mode = authMode) {
+    const errors = {};
+    const trimmedEmail = email.trim();
+
+    if (mode === 'signup' && !fullName.trim()) {
+      errors.fullName = 'Full name required';
+    }
+
+    if (!trimmedEmail) {
+      errors.email = 'Email required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      errors.email = 'Invalid email';
+    }
+
+    if (!password) {
+      errors.password = 'Password required';
+    } else if (password.length < 6) {
+      errors.password = 'Password must be at least 6 characters';
+    }
+
+    return errors;
+  }
+
+  function handleAuthModeChange(nextMode) {
+    setAuthMode(nextMode);
+    setFormErrors({});
+    setStatus('');
   }
 
   async function handleCreateJob(event) {
@@ -1077,12 +1127,20 @@ function App() {
       <main className="page-shell login-shell">
         <section className="landing-layout">
           <div className="landing-hero">
-            <div className="brand-mark">
-              <BriefcaseBusiness size={28} />
+            <div className="login-brand-lockup">
+              <div className="brand-mark login-brand-mark">
+                <BriefcaseBusiness size={34} />
+              </div>
+              <div>
+                <p className="eyebrow">Job Portal System</p>
+                <span>Hiring workspace for focused teams</span>
+              </div>
             </div>
-            <div>
-              <p className="eyebrow">Job Portal System</p>
-              <h1>Find talent and opportunities from one focused workspace.</h1>
+            <div className="hero-copy">
+              <h1>
+                Find talent and opportunities from one focused{' '}
+                <span>workspace.</span>
+              </h1>
               <p>
                 A role-based hiring platform for seekers and employers with job
                 search, applications, applicant review, and protected sessions.
@@ -1097,17 +1155,39 @@ function App() {
             </div>
             <div className="hero-stats">
               <div>
+                <ShieldCheck size={20} />
                 <strong>JWT</strong>
                 <span>Protected sessions</span>
               </div>
               <div>
+                <Users size={20} />
                 <strong>2 Roles</strong>
                 <span>Seeker and employer</span>
               </div>
               <div>
+                <CheckCircle2 size={20} />
                 <strong>Live</strong>
                 <span>Job workflows</span>
               </div>
+            </div>
+            <div className="hero-actions" aria-label="Authentication shortcuts">
+              <button
+                type="button"
+                onClick={() => handleAuthModeChange('signup')}
+                disabled={isLoading}
+              >
+                <UserRound size={18} />
+                Create Account
+              </button>
+              <button
+                className="hero-secondary-button"
+                type="button"
+                onClick={() => handleAuthModeChange('login')}
+                disabled={isLoading}
+              >
+                <Info size={18} />
+                Learn More
+              </button>
             </div>
           </div>
 
@@ -1130,14 +1210,16 @@ function App() {
               <button
                 className={authMode === 'login' ? 'active' : ''}
                 type="button"
-                onClick={() => setAuthMode('login')}
+                onClick={() => handleAuthModeChange('login')}
+                disabled={isLoading}
               >
                 Login
               </button>
               <button
                 className={authMode === 'signup' ? 'active' : ''}
                 type="button"
-                onClick={() => setAuthMode('signup')}
+                onClick={() => handleAuthModeChange('signup')}
+                disabled={isLoading}
               >
                 Sign Up
               </button>
@@ -1151,50 +1233,106 @@ function App() {
                 <>
                   <label>
                     Full Name
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(event) => setFullName(event.target.value)}
-                      placeholder="Your full name"
-                      required
-                    />
+                    <span className="input-with-icon">
+                      <UserRound size={20} />
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(event) => {
+                          setFullName(event.target.value);
+                          setFormErrors((currentErrors) => ({
+                            ...currentErrors,
+                            fullName: '',
+                          }));
+                        }}
+                        placeholder="Your full name"
+                        aria-invalid={Boolean(formErrors.fullName)}
+                        required
+                        disabled={isLoading}
+                      />
+                    </span>
+                    {formErrors.fullName && (
+                      <span className="field-error">{formErrors.fullName}</span>
+                    )}
                   </label>
                   <label>
                     Account Type
-                    <select
-                      value={signupRole}
-                      onChange={(event) => setSignupRole(event.target.value)}
-                    >
-                      <option value="seeker">Job Seeker</option>
-                      <option value="employer">Employer</option>
-                    </select>
+                    <span className="input-with-icon">
+                      <Users size={20} />
+                      <select
+                        value={signupRole}
+                        onChange={(event) => setSignupRole(event.target.value)}
+                        disabled={isLoading}
+                      >
+                        <option value="seeker">Job Seeker</option>
+                        <option value="employer">Employer</option>
+                      </select>
+                    </span>
                   </label>
                 </>
               )}
               <label>
                 Email
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="meraz@gmail.com"
-                  required
-                />
+                <span className="input-with-icon">
+                  <Mail size={20} />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      setFormErrors((currentErrors) => ({
+                        ...currentErrors,
+                        email: '',
+                      }));
+                    }}
+                    placeholder="meraz@gmail.com"
+                    aria-invalid={Boolean(formErrors.email)}
+                    required
+                    disabled={isLoading}
+                  />
+                </span>
+                {formErrors.email && (
+                  <span className="field-error">{formErrors.email}</span>
+                )}
               </label>
 
               <label>
                 Password
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="123456"
-                  required
-                />
+                <span className="input-with-icon">
+                  <LockKeyhole size={20} />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      setFormErrors((currentErrors) => ({
+                        ...currentErrors,
+                        password: '',
+                      }));
+                    }}
+                    placeholder="123456"
+                    aria-invalid={Boolean(formErrors.password)}
+                    required
+                    disabled={isLoading}
+                  />
+                </span>
+                {formErrors.password && (
+                  <span className="field-error">{formErrors.password}</span>
+                )}
               </label>
 
+              {authMode === 'login' && (
+                <a className="forgot-link" href="#forgot-password">
+                  Forgot Password?
+                </a>
+              )}
+
               <button type="submit" disabled={isLoading}>
-                <LogIn size={18} />
+                {isLoading ? (
+                  <span className="button-spinner" aria-hidden="true" />
+                ) : (
+                  <LogIn size={18} />
+                )}
                 {isLoading
                   ? authMode === 'login'
                     ? 'Signing in...'
