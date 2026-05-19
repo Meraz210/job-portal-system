@@ -142,6 +142,10 @@ function getCvUrl(application) {
   return `${API_URL}/${cvPath.replace(/^\/+/, '')}`;
 }
 
+function getApplicationJobId(application) {
+  return application.job?.id || application.jobId || application.job_id;
+}
+
 function getCompanyInitials(company = '') {
   const words = company.trim().split(/\s+/).filter(Boolean);
 
@@ -289,11 +293,15 @@ function App() {
 
   const user = token ? decodeJwt(token) : null;
   const role = user?.role;
-  const appliedJobIds = new Set(
+  const applicationStatusByJobId = new Map(
     applications
-      .map((application) => application.job?.id)
-      .filter(Boolean),
+      .map((application) => [
+        getApplicationJobId(application),
+        getApplicationStatus(application),
+      ])
+      .filter(([jobId]) => Boolean(jobId)),
   );
+  const appliedJobIds = new Set(applicationStatusByJobId.keys());
 
   React.useEffect(() => {
     if (!token) {
@@ -2168,7 +2176,7 @@ function App() {
         <div className="jobs-header">
           <div>
             <h2>Jobs</h2>
-            <p>Browse open roles from the backend API.</p>
+            <p>Search, compare, and apply to open roles from one workspace.</p>
           </div>
           <div className="jobs-actions">
             <button
@@ -2178,6 +2186,39 @@ function App() {
             >
               {isJobsLoading ? 'Loading...' : 'Refresh'}
             </button>
+          </div>
+        </div>
+
+        <div className="jobs-summary-grid">
+          <div className="jobs-summary-card">
+            <span className="summary-icon jobs-icon">
+              <BriefcaseBusiness size={20} />
+            </span>
+            <div>
+              <span>Open Roles</span>
+              <strong>{jobs.length}</strong>
+            </div>
+          </div>
+          <div className="jobs-summary-card">
+            <span className="summary-icon applications-icon">
+              <ClipboardList size={20} />
+            </span>
+            <div>
+              <span>
+                {role === 'employer'
+                  ? 'Posted Jobs'
+                  : role === 'admin'
+                    ? 'Applications'
+                    : 'My Applications'}
+              </span>
+              <strong>
+                {role === 'employer'
+                  ? employerJobs.length
+                  : role === 'admin'
+                    ? adminApplications.length
+                    : applications.length}
+              </strong>
+            </div>
           </div>
         </div>
 
@@ -2327,99 +2368,140 @@ function App() {
         )}
 
         <div className="job-grid">
-          {jobs.map((job) => (
-            <article className="job-card" key={job.id}>
-              <img
-                className="job-card-image"
-                src={getJobImage(job)}
-                alt={`${job.title} role`}
-              />
-              <div className="job-card-header">
-                <div className="company-logo" aria-hidden="true">
-                  {getCompanyInitials(job.company)}
-                </div>
-                <div>
-                  <h3>{job.title}</h3>
-                  <p>{job.company}</p>
-                </div>
-              </div>
-              <div className="job-badges">
-                <span>
-                  <MapPin size={14} />
-                  {job.location}
-                </span>
-                <span>
-                  <DollarSign size={14} />
-                  {formatSalary(job.salary)}
-                </span>
-              </div>
-              <dl>
-                <div>
-                  <dt>Location</dt>
-                  <dd>{job.location}</dd>
-                </div>
-                <div>
-                  <dt>Salary</dt>
-                  <dd>{formatSalary(job.salary)}</dd>
-                </div>
-              </dl>
-              <div className="job-extra-grid">
-                {job.experience && <span>Experience: {job.experience}</span>}
-                {job.jobType && <span>Type: {job.jobType}</span>}
-                {job.workplaceType && (
-                  <span>Workplace: {job.workplaceType}</span>
-                )}
-                {job.vacancy && <span>Vacancy: {job.vacancy}</span>}
-                {job.deadline && <span>Deadline: {job.deadline}</span>}
-              </div>
-              {job.educationRequirement && (
-                <div className="job-info-block">
-                  <strong>Education</strong>
-                  <p>{job.educationRequirement}</p>
-                </div>
-              )}
-              {job.skills && (
-                <div className="job-info-block">
-                  <strong>Skills</strong>
-                  <p>{job.skills}</p>
-                </div>
-              )}
-              <p className="job-description">{job.description}</p>
-              {role === 'seeker' && (
-                <div className="apply-action">
-                  {appliedJobIds.has(job.id) && (
-                    <span className="applied-badge">Applied</span>
+          {jobs.map((job) => {
+            const applicationStatus = applicationStatusByJobId.get(job.id);
+            const isApplied = appliedJobIds.has(job.id);
+            const jobStatusLabel =
+              applicationStatus === 'rejected'
+                ? 'Rejected'
+                : applicationStatus === 'pending'
+                  ? 'Pending'
+                  : isApplied
+                    ? 'Applied'
+                    : null;
+            const jobStatusClass =
+              applicationStatus === 'rejected'
+                ? 'job-status-rejected'
+                : applicationStatus === 'pending'
+                  ? 'job-status-pending'
+                  : isApplied
+                    ? 'job-status-applied'
+                    : '';
+
+            return (
+              <article className="job-card" key={job.id}>
+                <img
+                  className="job-card-image"
+                  src={getJobImage(job)}
+                  alt={`${job.title} role`}
+                />
+                <div className="job-card-header">
+                  <div className="company-logo" aria-hidden="true">
+                    {getCompanyInitials(job.company)}
+                  </div>
+                  <div>
+                    <h3>{job.title}</h3>
+                    <p>{job.company}</p>
+                  </div>
+                  {jobStatusLabel && (
+                    <span className={`job-status-badge ${jobStatusClass}`}>
+                      {jobStatusLabel}
+                    </span>
                   )}
-                  <button
-                    onClick={() => openApplyModal(job)}
-                    disabled={
-                      applyingJobId === job.id || appliedJobIds.has(job.id)
-                    }
-                  >
-                    <Send size={18} />
-                    {appliedJobIds.has(job.id)
-                      ? 'Application Sent'
-                      : applyingJobId === job.id
-                        ? 'Applying...'
-                        : 'Apply Now'}
-                  </button>
                 </div>
-              )}
-              {role === 'employer' && (
-                <button
-                  className="secondary-button"
-                  onClick={() => handleViewApplicants(job.id)}
-                >
-                  <Eye size={18} />
-                  Applicants
-                </button>
-              )}
-            </article>
-          ))}
+                <div className="job-badges">
+                  <span>
+                    <MapPin size={14} />
+                    {job.location}
+                  </span>
+                  <span>
+                    <DollarSign size={14} />
+                    {formatSalary(job.salary)}
+                  </span>
+                </div>
+                <dl>
+                  <div>
+                    <dt>Location</dt>
+                    <dd>{job.location}</dd>
+                  </div>
+                  <div>
+                    <dt>Salary</dt>
+                    <dd>{formatSalary(job.salary)}</dd>
+                  </div>
+                </dl>
+                <div className="job-extra-grid">
+                  {job.experience && <span>Experience: {job.experience}</span>}
+                  {job.jobType && <span>Type: {job.jobType}</span>}
+                  {job.workplaceType && (
+                    <span>Workplace: {job.workplaceType}</span>
+                  )}
+                  {job.vacancy && <span>Vacancy: {job.vacancy}</span>}
+                  {job.deadline && <span>Deadline: {job.deadline}</span>}
+                </div>
+                {job.educationRequirement && (
+                  <div className="job-info-block">
+                    <strong>Education</strong>
+                    <p>{job.educationRequirement}</p>
+                  </div>
+                )}
+                {job.skills && (
+                  <div className="job-info-block">
+                    <strong>Skills</strong>
+                    <p>{job.skills}</p>
+                  </div>
+                )}
+                <p className="job-description">{job.description}</p>
+                {role === 'seeker' && (
+                  <div className="apply-action">
+                    {jobStatusLabel && (
+                      <span className={`applied-badge ${jobStatusClass}`}>
+                        {jobStatusLabel}
+                      </span>
+                    )}
+                    <button
+                      className={isApplied ? 'apply-button applied' : 'apply-button'}
+                      onClick={() => openApplyModal(job)}
+                      disabled={applyingJobId === job.id || isApplied}
+                    >
+                      {isApplied ? <CheckCircle2 size={18} /> : <Send size={18} />}
+                      {isApplied
+                        ? 'Application Sent'
+                        : applyingJobId === job.id
+                          ? 'Applying...'
+                          : 'Apply Now'}
+                    </button>
+                  </div>
+                )}
+                {role === 'employer' && (
+                  <button
+                    className="secondary-button"
+                    onClick={() => handleViewApplicants(job.id)}
+                  >
+                    <Eye size={18} />
+                    Applicants
+                  </button>
+                )}
+              </article>
+            );
+          })}
         </div>
 
         {jobs.length === 0 && !jobsStatus && !isJobsLoading && (
-          <p className="empty-state">No jobs found</p>
+          <div className="jobs-empty-state">
+            <div className="empty-illustration" aria-hidden="true">
+              <BriefcaseBusiness size={34} />
+              <Search size={22} />
+            </div>
+            <h3>No jobs found</h3>
+            <p>Try clearing filters or searching with a broader keyword.</p>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={clearJobFilters}
+            >
+              Clear Filters
+            </button>
+          </div>
         )}
 
         {selectedApplicants && (
