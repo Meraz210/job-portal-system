@@ -341,11 +341,14 @@ function App() {
   React.useEffect(() => {
     if (token && role === 'employer') {
       loadEmployerJobs(token);
+      loadEmployerApplicants(token);
       return;
     }
 
     setEmployerJobs([]);
     setEmployerStatus('');
+    setSelectedApplicants(null);
+    setApplicantsStatus('');
   }, [token, role]);
 
   React.useEffect(() => {
@@ -478,6 +481,46 @@ function App() {
       setEmployerStatus(error.message);
     } finally {
       setIsEmployerJobsLoading(false);
+    }
+  }
+
+  async function loadEmployerApplicants(activeToken = token) {
+    if (!activeToken || role !== 'employer') {
+      return;
+    }
+
+    setApplicantsStatus('');
+    setIsApplicantsLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/applications/employer`, {
+        headers: {
+          Authorization: `Bearer ${activeToken}`,
+        },
+      });
+      const data = await response.json();
+
+      if (response.status === 401) {
+        expireSession();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not load applicants');
+      }
+
+      setSelectedApplicants({
+        jobId: null,
+        applicants: normalizeJobs(data),
+      });
+    } catch (error) {
+      setSelectedApplicants({
+        jobId: null,
+        applicants: [],
+      });
+      setApplicantsStatus(error.message);
+    } finally {
+      setIsApplicantsLoading(false);
     }
   }
 
@@ -905,6 +948,8 @@ function App() {
 
       if (selectedApplicants?.jobId) {
         await handleViewApplicants(selectedApplicants.jobId);
+      } else {
+        await loadEmployerApplicants();
       }
       setApplicantsStatus('Application status updated.');
     } catch (error) {
@@ -1118,6 +1163,8 @@ function App() {
     (job) => job.id === selectedApplicants?.jobId,
   );
   const selectedEmployerApplicants = selectedApplicants?.applicants || [];
+  const hasApplicantsError =
+    applicantsStatus && applicantsStatus !== 'Application status updated.';
   const employerApplicationStatusCounts = selectedEmployerApplicants.reduce(
     (counts, application) => {
       const applicationStatus = getApplicationStatus(application);
@@ -2017,6 +2064,16 @@ function App() {
                           <p>{job.company}</p>
                         </div>
                         <button
+                          className="secondary-button applicants-button"
+                          type="button"
+                          onClick={() => handleViewApplicants(job.id)}
+                          aria-label={`View applicants for ${job.title}`}
+                          title="Applicants"
+                        >
+                          <Eye size={18} />
+                          Applicants
+                        </button>
+                        <button
                           className="secondary-button icon-button"
                           type="button"
                           onClick={() => startEditingJob(job)}
@@ -2169,6 +2226,108 @@ function App() {
               </form>
             </section>
           </div>
+
+          {selectedApplicants && (
+            <div className="applicants-panel" id="applicants">
+              <div className="panel-header compact">
+                <Eye size={20} />
+                <h2>
+                  {selectedEmployerJob
+                    ? `Applicants for ${selectedEmployerJob.title}`
+                    : 'All Applicants'}
+                </h2>
+                <button
+                  className="secondary-button applicants-refresh-button"
+                  type="button"
+                  onClick={() =>
+                    selectedApplicants.jobId
+                      ? handleViewApplicants(selectedApplicants.jobId)
+                      : loadEmployerApplicants()
+                  }
+                  disabled={isApplicantsLoading}
+                >
+                  <Users size={18} />
+                  {isApplicantsLoading ? 'Loading...' : 'Refresh'}
+                </button>
+              </div>
+
+              {isApplicantsLoading && (
+                <p className="empty-state">Loading applicants...</p>
+              )}
+
+              {applicantsStatus && (
+                <p className={getStatusClass(applicantsStatus)}>
+                  {applicantsStatus}
+                </p>
+              )}
+
+              {!isApplicantsLoading &&
+              !hasApplicantsError &&
+              selectedApplicants.applicants.length > 0 ? (
+                <div className="applicant-table">
+                  <div className="applicant-table-head">
+                    <span>Full Name</span>
+                    <span>Email</span>
+                    <span>Role</span>
+                    <span>Applied Date</span>
+                    <span>Status</span>
+                    <span>CV</span>
+                  </div>
+                  {selectedApplicants.applicants.map((application) => {
+                    const cvUrl = getCvUrl(application);
+
+                    return (
+                      <div className="applicant-row" key={application.id}>
+                        <strong>
+                          {application.applicant?.fullName || 'Unknown applicant'}
+                        </strong>
+                        <span>{application.applicant?.email || 'No email'}</span>
+                        <span>{application.applicant?.role || 'seeker'}</span>
+                        <span>{formatApplicationDate(application)}</span>
+                        <select
+                          className="status-select"
+                          value={getApplicationStatus(application)}
+                          onChange={(event) =>
+                            handleUpdateApplicationStatus(
+                              application,
+                              event.target.value,
+                            )
+                          }
+                        >
+                          {APPLICATION_STATUSES.map((statusOption) => (
+                            <option key={statusOption} value={statusOption}>
+                              {statusOption[0].toUpperCase() +
+                                statusOption.slice(1)}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="cv-actions">
+                          {cvUrl ? (
+                            <>
+                              <a href={cvUrl} target="_blank" rel="noreferrer">
+                                View CV
+                              </a>
+                              <a href={cvUrl} download>
+                                Download CV
+                              </a>
+                            </>
+                          ) : (
+                            <span>No CV</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              {!isApplicantsLoading &&
+                !hasApplicantsError &&
+                selectedApplicants.applicants.length === 0 && (
+                <p className="empty-state">No applicants yet.</p>
+              )}
+            </div>
+          )}
         </section>
       )}
 
@@ -2473,13 +2632,9 @@ function App() {
                   </div>
                 )}
                 {role === 'employer' && (
-                  <button
-                    className="secondary-button"
-                    onClick={() => handleViewApplicants(job.id)}
-                  >
-                    <Eye size={18} />
-                    Applicants
-                  </button>
+                  <div className="employer-job-note">
+                    Manage applicants from My Posted Jobs.
+                  </div>
                 )}
               </article>
             );
@@ -2504,7 +2659,7 @@ function App() {
           </div>
         )}
 
-        {selectedApplicants && (
+        {selectedApplicants && role !== 'employer' && (
           <div className="applicants-panel" id="applicants">
             <div className="panel-header compact">
               <Eye size={20} />
@@ -2522,7 +2677,7 @@ function App() {
             )}
 
             {!isApplicantsLoading &&
-            !applicantsStatus &&
+            !hasApplicantsError &&
             selectedApplicants.applicants.length > 0 ? (
               <div className="applicant-table">
                 <div className="applicant-table-head">
@@ -2582,7 +2737,7 @@ function App() {
             ) : null}
 
             {!isApplicantsLoading &&
-              !applicantsStatus &&
+              !hasApplicantsError &&
               selectedApplicants.applicants.length === 0 && (
               <p className="empty-state">No applicants yet.</p>
             )}

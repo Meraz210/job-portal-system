@@ -192,6 +192,20 @@ export class ApplicationsController {
     );
   }
 
+  @Get('employer')
+  @ApiOperation({
+    summary: 'Get applicants for current employer jobs',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Employer applicants returned successfully.',
+  })
+  employerApplications(@Req() req) {
+    return this.applicationsService.getApplicationsForEmployer(
+      req.user,
+    );
+  }
+
   @Get('job/:jobId')
   @ApiOperation({
     summary: 'Get applicants for a job',

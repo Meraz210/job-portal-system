@@ -1146,6 +1146,17 @@ button:disabled {
   padding: 0;
 }
 
+.applicants-button {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.applicants-refresh-button {
+  margin-left: auto;
+  min-height: 38px;
+  padding: 10px 14px;
+}
+
 .empty-state {
   margin-top: 18px;
   padding: 18px;
@@ -2031,6 +2042,13 @@ button:disabled {
   opacity: 1;
 }
 
+.employer-job-note {
+  align-self: end;
+  margin-top: auto;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 .job-card p,
 .application-card p,
 .posted-job-card p {
@@ -2171,7 +2189,7 @@ button:disabled {
 
 .posted-job-heading {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: start;
   gap: 12px;
 }
@@ -2444,7 +2462,7 @@ button:disabled {
   }
 
   .posted-job-heading {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
   }
 
   .app-topbar {

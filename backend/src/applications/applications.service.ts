@@ -203,10 +203,17 @@ export class ApplicationsService {
 
     const job = await this.jobRepository.findOne({
       where: { id: jobId },
+      relations: ['createdBy'],
     });
 
     if (!job) {
       throw new NotFoundException('Job not found');
+    }
+
+    if (job.createdBy.id !== user.userId) {
+      throw new ForbiddenException(
+        'You can only view applicants for your own jobs',
+      );
     }
 
     const applications = await this.applicationRepository.find({
@@ -227,6 +234,30 @@ export class ApplicationsService {
         role: application.applicant.role,
       },
     }));
+  }
+
+  async getApplicationsForEmployer(user: any) {
+    if (user.role !== Role.EMPLOYER) {
+      throw new ForbiddenException(
+        'Only employers can view applicants',
+      );
+    }
+
+    const applications =
+      await this.applicationRepository
+        .createQueryBuilder('application')
+        .innerJoinAndSelect(
+          'application.applicant',
+          'applicant',
+        )
+        .innerJoinAndSelect('application.job', 'job')
+        .where('job."createdById" = :employerId', {
+          employerId: user.userId,
+        })
+        .orderBy('application."createdAt"', 'DESC')
+        .getMany();
+
+    return applications.map(sanitizeApplication);
   }
 
   async updateStatus(
