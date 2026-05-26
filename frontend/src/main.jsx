@@ -26,6 +26,8 @@ import {
   UserRound,
   Users,
 } from 'lucide-react';
+import AdminUsersTable from './AdminUsersTable.jsx';
+import ApplyJobForm from './ApplyJobForm.jsx';
 import './styles.css';
 import backendDeveloperImage from './assets/images/backend-developer.png';
 import digitalMarketingImage from './assets/images/digital-marketing.png';
@@ -280,11 +282,6 @@ function App() {
     React.useState(false);
   const [applyingJobId, setApplyingJobId] = React.useState(null);
   const [applyModalJob, setApplyModalJob] = React.useState(null);
-  const [applicationForm, setApplicationForm] = React.useState({
-    cv: null,
-    coverLetter: '',
-    portfolioUrl: '',
-  });
   const [selectedApplicants, setSelectedApplicants] = React.useState(null);
   const [applicantsStatus, setApplicantsStatus] = React.useState('');
   const [isApplicantsLoading, setIsApplicantsLoading] = React.useState(false);
@@ -785,11 +782,6 @@ function App() {
   function openApplyModal(job) {
     setJobsStatus('');
     setApplyModalJob(job);
-    setApplicationForm({
-      cv: null,
-      coverLetter: '',
-      portfolioUrl: '',
-    });
   }
 
   function closeApplyModal() {
@@ -798,78 +790,6 @@ function App() {
     }
 
     setApplyModalJob(null);
-    setApplicationForm({
-      cv: null,
-      coverLetter: '',
-      portfolioUrl: '',
-    });
-  }
-
-  async function handleApply(event) {
-    event.preventDefault();
-
-    if (!applyModalJob) {
-      return;
-    }
-
-    if (!applicationForm.cv) {
-      setJobsStatus('Please upload your CV before applying.');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('jobId', String(applyModalJob.id));
-    formData.append('cv', applicationForm.cv);
-
-    if (applicationForm.coverLetter.trim()) {
-      formData.append(
-        'coverLetter',
-        applicationForm.coverLetter.trim(),
-      );
-    }
-
-    if (applicationForm.portfolioUrl.trim()) {
-      formData.append(
-        'portfolioUrl',
-        applicationForm.portfolioUrl.trim(),
-      );
-    }
-
-    setJobsStatus('');
-    setApplyingJobId(applyModalJob.id);
-
-    try {
-      const response = await fetch(`${API_URL}/applications`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-      const data = await response.json();
-
-      if (response.status === 401) {
-        expireSession();
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Could not apply');
-      }
-
-      setJobsStatus('Application submitted.');
-      setApplyModalJob(null);
-      setApplicationForm({
-        cv: null,
-        coverLetter: '',
-        portfolioUrl: '',
-      });
-      await loadMyApplications();
-    } catch (error) {
-      setJobsStatus(error.message);
-    } finally {
-      setApplyingJobId(null);
-    }
   }
 
   async function handleViewApplicants(jobId) {
@@ -1394,12 +1314,6 @@ function App() {
                 )}
               </label>
 
-              {authMode === 'login' && (
-                <a className="forgot-link" href="#forgot-password">
-                  Forgot Password?
-                </a>
-              )}
-
               <button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <span className="button-spinner" aria-hidden="true" />
@@ -1809,36 +1723,15 @@ function App() {
                 <UserRound size={20} />
                 <h2>Users</h2>
               </div>
-              {adminUsers.length === 0 && !isAdminLoading ? (
-                <p className="empty-state">No users found.</p>
-              ) : (
-                <div className="admin-table">
-                  <div className="admin-table-head users-table">
-                    <span>Name</span>
-                    <span>Email</span>
-                    <span>Role</span>
-                    <span>Action</span>
-                  </div>
-                  {adminUsers.map((adminUser) => (
-                    <div className="admin-row users-table" key={adminUser.id}>
-                      <strong>{adminUser.fullName}</strong>
-                      <span>{adminUser.email}</span>
-                      <span className={`role-pill role-${adminUser.role}`}>
-                        {adminUser.role}
-                      </span>
-                      <button
-                        className="danger-button icon-button"
-                        type="button"
-                        onClick={() => handleAdminDeleteUser(adminUser.id)}
-                        aria-label={`Delete ${adminUser.fullName}`}
-                        title="Delete user"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <AdminUsersTable
+                onUnauthorized={expireSession}
+                onUsersLoaded={setAdminUsers}
+                onChanged={async (message) => {
+                  setAdminStatus(message);
+                  await loadAdminDashboard();
+                  await loadJobs();
+                }}
+              />
             </section>
 
             <section className="dashboard-panel">
@@ -2459,69 +2352,20 @@ function App() {
                 </button>
               </div>
 
-              <form className="apply-form" onSubmit={handleApply}>
-                <label>
-                  Upload CV
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    onChange={(event) =>
-                      setApplicationForm({
-                        ...applicationForm,
-                        cv: event.target.files?.[0] || null,
-                      })
-                    }
-                    required
-                  />
-                  <span className="field-hint">
-                    PDF, DOC, or DOCX. Maximum size: 5MB.
-                  </span>
-                </label>
-
-                <label>
-                  Cover Letter
-                  <textarea
-                    value={applicationForm.coverLetter}
-                    onChange={(event) =>
-                      setApplicationForm({
-                        ...applicationForm,
-                        coverLetter: event.target.value,
-                      })
-                    }
-                    placeholder="Optional short note for the employer."
-                  />
-                </label>
-
-                <label>
-                  Portfolio Link
-                  <input
-                    type="url"
-                    value={applicationForm.portfolioUrl}
-                    onChange={(event) =>
-                      setApplicationForm({
-                        ...applicationForm,
-                        portfolioUrl: event.target.value,
-                      })
-                    }
-                    placeholder="https://your-portfolio.com"
-                  />
-                </label>
-
-                <div className="modal-actions">
-                  <button type="submit" disabled={Boolean(applyingJobId)}>
-                    <Send size={18} />
-                    {applyingJobId ? 'Submitting...' : 'Submit Application'}
-                  </button>
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={closeApplyModal}
-                    disabled={Boolean(applyingJobId)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
+              <ApplyJobForm
+                apiUrl={API_URL}
+                job={applyModalJob}
+                isSubmitting={Boolean(applyingJobId)}
+                onCancel={closeApplyModal}
+                onStatusChange={setJobsStatus}
+                onSubmitStart={setApplyingJobId}
+                onSubmitEnd={() => setApplyingJobId(null)}
+                onUnauthorized={expireSession}
+                onSuccess={async () => {
+                  setApplyModalJob(null);
+                  await loadMyApplications();
+                }}
+              />
             </section>
           </div>
         )}

@@ -111,6 +111,22 @@ export class AdminService {
     };
   }
 
+  async updateUserRole(id: number, role: User['role']) {
+    const user = await this.userRepository.findOne({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.role = role;
+
+    const updatedUser = await this.userRepository.save(user);
+
+    return sanitizeUser(updatedUser);
+  }
+
   async deleteJob(id: number) {
     const job = await this.jobRepository.findOne({
       where: { id },

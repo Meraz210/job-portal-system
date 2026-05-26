@@ -6,7 +6,7 @@ This document describes the core PostgreSQL database schema used by the Job Port
 
 ### User
 
-Stores registered users. A user can be a job seeker or employer.
+Stores registered users. A user can be an admin, employer, or seeker.
 
 | Field | Type | Notes |
 | --- | --- | --- |
@@ -28,6 +28,13 @@ Stores job posts created by employers.
 | `location` | `string` | Job location |
 | `salary` | `string` | Salary range or amount |
 | `description` | `string` | Job description |
+| `educationRequirement` | `string \| null` | Optional education requirement |
+| `experience` | `string \| null` | Optional experience requirement |
+| `jobType` | `string \| null` | Optional job type such as full-time |
+| `skills` | `string \| null` | Optional required skills |
+| `deadline` | `string \| null` | Optional application deadline |
+| `vacancy` | `string \| null` | Optional vacancy count |
+| `workplaceType` | `string \| null` | Optional workplace type such as remote, hybrid, or on-site |
 | `createdBy` | `User` | Employer who created the job |
 
 ### Application
@@ -38,6 +45,9 @@ Stores seeker applications for jobs.
 | --- | --- | --- |
 | `id` | `number` | Primary key |
 | `status` | `string` | `pending`, `accepted`, or `rejected`; defaults to `pending` |
+| `cvUrl` | `string \| null` | Uploaded CV path |
+| `coverLetter` | `string \| null` | Optional cover letter |
+| `portfolioUrl` | `string \| null` | Optional portfolio URL |
 | `createdAt` | `Date` | Application creation timestamp |
 | `applicant` | `User` | Seeker who applied |
 | `job` | `Job` | Job being applied to |
@@ -75,12 +85,22 @@ erDiagram
     string location
     string salary
     string description
+    string educationRequirement
+    string experience
+    string jobType
+    string skills
+    string deadline
+    string vacancy
+    string workplaceType
     number createdById FK
   }
 
   APPLICATION {
     number id PK
     string status
+    string cvUrl
+    string coverLetter
+    string portfolioUrl
     Date createdAt
     number applicantId FK
     number jobId FK

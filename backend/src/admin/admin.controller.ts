@@ -2,8 +2,10 @@ import {
   Controller,
   Delete,
   Get,
+  Body,
   Param,
   ParseIntPipe,
+  Patch,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -18,6 +20,7 @@ import { JwtGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '../users/enums/role.enum';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 
 @Controller('admin')
 @UseGuards(JwtGuard, RolesGuard)
@@ -62,6 +65,16 @@ export class AdminController {
   @ApiParam({ name: 'id', example: 1 })
   deleteUser(@Param('id', ParseIntPipe) id: number) {
     return this.adminService.deleteUser(id);
+  }
+
+  @Patch('users/:id/role')
+  @ApiOperation({ summary: 'Update a user role' })
+  @ApiParam({ name: 'id', example: 1 })
+  updateUserRole(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUserRoleDto: UpdateUserRoleDto,
+  ) {
+    return this.adminService.updateUserRole(id, updateUserRoleDto.role);
   }
 
   @Delete('jobs/:id')
