@@ -21,6 +21,10 @@ A full-stack job portal application for job seekers, employers, and admins. The 
 - [File Uploads](#file-uploads)
 - [Validation and Security](#validation-and-security)
 - [Build and Verification](#build-and-verification)
+- [Manual QA Checklist](#manual-qa-checklist)
+- [Screenshots](#screenshots)
+- [Deployment Notes](#deployment-notes)
+- [Final Project Status](#final-project-status)
 - [Troubleshooting](#troubleshooting)
 
 ## Overview
@@ -145,6 +149,11 @@ job-portal-system/
 |   |-- vite.config.js
 |-- docs/
 |   |-- database-schema.md
+|   |-- deployment.md
+|   |-- QA_CHECKLIST.md
+|   |-- TEST_EVIDENCE.md
+|   |-- E2E_TEST_PLAN.md
+|   |-- screenshots/
 |-- postman/
 |-- README.md
 ```
@@ -164,6 +173,7 @@ Create `backend/.env` from `backend/.env.example`.
 
 ```env
 PORT=8000
+FRONTEND_URL=http://localhost:5173
 
 DB_HOST=localhost
 DB_PORT=5432
@@ -184,7 +194,7 @@ MAIL_FROM="Job Portal <no-reply@example.com>"
 Important notes:
 
 - The frontend uses `VITE_API_URL` when configured and falls back to `http://localhost:8000`.
-- Backend CORS allows `http://localhost:5173` and `http://127.0.0.1:5173`.
+- Backend CORS allows `http://localhost:5173`, `http://127.0.0.1:5173`, and any comma-separated origins configured in `FRONTEND_URL`.
 - TypeORM `synchronize` is enabled for local development. For production, use migrations instead.
 
 Create `frontend/.env` from `frontend/.env.example` when the backend URL is different from the default.
@@ -623,7 +633,7 @@ Before final submission or deployment, verify these flows in the browser:
 Detailed checklist file:
 
 ```text
-docs/qa-checklist.md
+docs/QA_CHECKLIST.md
 ```
 
 - Seeker registration and login
@@ -714,6 +724,22 @@ Deployment guidance is available in:
 ```text
 docs/deployment.md
 ```
+
+Additional final submission documents:
+
+```text
+docs/TEST_EVIDENCE.md
+docs/E2E_TEST_PLAN.md
+```
+
+## Final Project Status
+
+- Frontend and backend build commands are documented for local and deployment use.
+- Frontend build passed on 2026-05-27 with `npm run build`.
+- Backend build passed on 2026-05-27 with `npm run build`.
+- Environment examples are provided without real secrets.
+- Manual QA, real-data flow evidence, screenshots, and E2E planning documents are included under `docs/`.
+- Live deployment links are not configured yet; update the `Live Demo` section after hosting.
 
 ## Known Limitations
 

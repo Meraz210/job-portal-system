@@ -16,12 +16,25 @@ Set this environment variable in the frontend host:
 VITE_API_URL=https://your-backend-api.example.com
 ```
 
+Build command:
+
+```bash
+npm run build
+```
+
+Publish/output directory:
+
+```text
+dist
+```
+
 ## Backend Environment
 
 Set these environment variables in the backend host:
 
 ```env
 PORT=8000
+FRONTEND_URL=https://your-frontend-url.example.com
 DB_HOST=your-db-host
 DB_PORT=5432
 DB_USERNAME=your-db-user
@@ -39,12 +52,33 @@ MAIL_FROM="Job Portal <no-reply@example.com>"
 
 Do not commit real production secrets.
 
+Build command:
+
+```bash
+npm run build
+```
+
+Start command:
+
+```bash
+npm run start:prod
+```
+
+Health check:
+
+```text
+GET /
+GET /api/docs
+```
+
 ## Production Notes
 
 - Replace TypeORM `synchronize` with migrations before a real production launch.
-- Configure backend CORS for the deployed frontend domain.
+- Configure `FRONTEND_URL` with the deployed frontend domain so browser requests pass CORS.
 - Use persistent storage or object storage for uploaded CV files.
 - Seed or create the admin user after the backend is connected to the production database.
+- Set a strong `JWT_SECRET`; never use the example secret in production.
+- Configure `VITE_API_URL` to the deployed backend URL before building the frontend.
 
 ## README Live Demo Links
 
