@@ -2715,6 +2715,72 @@ function App() {
           )}
         </section>
       )}
+      <section className="support-section" id="support">
+        <div className="support-header">
+          <div>
+            <p className="eyebrow">Support Center</p>
+            <h2>Need help? We’re here to support you.</h2>
+            <p>
+              Get help with your account, job posting, applications, and
+              technical issues from one dedicated support area.
+            </p>
+          </div>
+          <div className="support-actions">
+            <a className="support-primary-cta" href="mailto:support@jobportal.local">
+              <MessageCircle size={18} />
+              Contact Support
+            </a>
+            <a className="support-secondary-cta" href="#support">
+              <HelpCircle size={18} />
+              Visit Help Center
+            </a>
+          </div>
+        </div>
+
+        <div className="support-card-grid">
+          <article className="support-card">
+            <span className="support-card-icon">
+              <ShieldCheck size={22} />
+            </span>
+            <h3>Account & Login Help</h3>
+            <p>
+              Resolve sign-in issues, account access questions, and role-based
+              workspace setup.
+            </p>
+          </article>
+          <article className="support-card">
+            <span className="support-card-icon">
+              <BriefcaseBusiness size={22} />
+            </span>
+            <h3>Job Posting Support</h3>
+            <p>
+              Get guidance for creating, editing, managing, and reviewing job
+              posts.
+            </p>
+          </article>
+          <article className="support-card">
+            <span className="support-card-icon">
+              <ClipboardList size={22} />
+            </span>
+            <h3>Application Tracking</h3>
+            <p>
+              Understand application statuses, CV uploads, and applicant review
+              workflows.
+            </p>
+          </article>
+          <article className="support-card">
+            <span className="support-card-icon">
+              <Info size={22} />
+            </span>
+            <h3>Technical Support</h3>
+            <p>
+              Report upload, dashboard, browser, or platform issues for faster
+              troubleshooting.
+            </p>
+          </article>
+        </div>
+      </section>
+
       <footer className="app-footer">
         <div>
           <strong>Job Portal System</strong>
