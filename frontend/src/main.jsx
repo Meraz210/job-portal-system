@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import {
+  Bell,
   Building2,
   BarChart3,
   BriefcaseBusiness,
@@ -8,6 +9,8 @@ import {
   CheckCircle2,
   ClipboardList,
   DollarSign,
+  ExternalLink,
+  HelpCircle,
   Trash2,
   Pencil,
   Eye,
@@ -19,8 +22,8 @@ import {
   LogOut,
   Mail,
   MapPin,
+  MessageCircle,
   Search,
-  Send,
   ShieldCheck,
   TrendingUp,
   UserRound,
@@ -28,6 +31,8 @@ import {
 } from 'lucide-react';
 import AdminUsersTable from './AdminUsersTable.jsx';
 import ApplyJobForm from './ApplyJobForm.jsx';
+import JobCard from './JobCard.jsx';
+import UserProfileHeader from './UserProfileHeader.jsx';
 import './styles.css';
 import backendDeveloperImage from './assets/images/backend-developer.png';
 import digitalMarketingImage from './assets/images/digital-marketing.png';
@@ -360,9 +365,38 @@ function App() {
     setAdminStatus('');
   }, [token, role]);
 
-  async function loadJobs(filters = jobFilters) {
-    setJobsStatus('Loading jobs...');
-    setIsJobsLoading(true);
+  React.useEffect(() => {
+    if (!token || !role) {
+      return undefined;
+    }
+
+    const refreshDashboard = () => {
+      loadJobs(jobFilters, { silent: true });
+
+      if (role === 'seeker') {
+        loadMyApplications(token, { silent: true });
+      }
+
+      if (role === 'employer') {
+        loadEmployerJobs(token, { silent: true });
+        loadEmployerApplicants(token, { silent: true });
+      }
+
+      if (role === 'admin') {
+        loadAdminDashboard(token, { silent: true });
+      }
+    };
+
+    const intervalId = window.setInterval(refreshDashboard, 20000);
+
+    return () => window.clearInterval(intervalId);
+  }, [token, role, jobFilters, selectedApplicants?.jobId]);
+
+  async function loadJobs(filters = jobFilters, options = {}) {
+    if (!options.silent) {
+      setJobsStatus('Loading jobs...');
+      setIsJobsLoading(true);
+    }
 
     try {
       const params = new URLSearchParams();
@@ -386,11 +420,17 @@ function App() {
       }
 
       setJobs(normalizeJobs(data));
-      setJobsStatus('');
+      if (!options.silent) {
+        setJobsStatus('');
+      }
     } catch (error) {
-      setJobsStatus(error.message);
+      if (!options.silent) {
+        setJobsStatus(error.message);
+      }
     } finally {
-      setIsJobsLoading(false);
+      if (!options.silent) {
+        setIsJobsLoading(false);
+      }
     }
   }
 
@@ -409,15 +449,17 @@ function App() {
     });
   }
 
-  async function loadMyApplications(activeToken = token) {
+  async function loadMyApplications(activeToken = token, options = {}) {
     if (!activeToken) {
       setApplications([]);
       setApplicationsStatus('Login to view your applications.');
       return;
     }
 
-    setIsApplicationsLoading(true);
-    setApplicationsStatus('');
+    if (!options.silent) {
+      setIsApplicationsLoading(true);
+      setApplicationsStatus('');
+    }
 
     try {
       const response = await fetch(`${API_URL}/applications/my`, {
@@ -438,22 +480,28 @@ function App() {
 
       setApplications(normalizeJobs(data));
     } catch (error) {
-      setApplications([]);
-      setApplicationsStatus(error.message);
+      if (!options.silent) {
+        setApplications([]);
+        setApplicationsStatus(error.message);
+      }
     } finally {
-      setIsApplicationsLoading(false);
+      if (!options.silent) {
+        setIsApplicationsLoading(false);
+      }
     }
   }
 
-  async function loadEmployerJobs(activeToken = token) {
+  async function loadEmployerJobs(activeToken = token, options = {}) {
     if (!activeToken) {
       setEmployerJobs([]);
       setEmployerStatus('Login as an employer to view posted jobs.');
       return;
     }
 
-    setIsEmployerJobsLoading(true);
-    setEmployerStatus('');
+    if (!options.silent) {
+      setIsEmployerJobsLoading(true);
+      setEmployerStatus('');
+    }
 
     try {
       const response = await fetch(`${API_URL}/jobs/my-posted`, {
@@ -474,27 +522,38 @@ function App() {
 
       setEmployerJobs(normalizeJobs(data));
     } catch (error) {
-      setEmployerJobs([]);
-      setEmployerStatus(error.message);
+      if (!options.silent) {
+        setEmployerJobs([]);
+        setEmployerStatus(error.message);
+      }
     } finally {
-      setIsEmployerJobsLoading(false);
+      if (!options.silent) {
+        setIsEmployerJobsLoading(false);
+      }
     }
   }
 
-  async function loadEmployerApplicants(activeToken = token) {
+  async function loadEmployerApplicants(activeToken = token, options = {}) {
     if (!activeToken || role !== 'employer') {
       return;
     }
 
-    setApplicantsStatus('');
-    setIsApplicantsLoading(true);
+    if (!options.silent) {
+      setApplicantsStatus('');
+      setIsApplicantsLoading(true);
+    }
 
     try {
-      const response = await fetch(`${API_URL}/applications/employer`, {
-        headers: {
-          Authorization: `Bearer ${activeToken}`,
+      const response = await fetch(
+        options.silent && selectedApplicants?.jobId
+          ? `${API_URL}/applications/job/${selectedApplicants.jobId}`
+          : `${API_URL}/applications/employer`,
+        {
+          headers: {
+            Authorization: `Bearer ${activeToken}`,
+          },
         },
-      });
+      );
       const data = await response.json();
 
       if (response.status === 401) {
@@ -507,28 +566,37 @@ function App() {
       }
 
       setSelectedApplicants({
-        jobId: null,
+        jobId:
+          options.silent && selectedApplicants?.jobId
+            ? selectedApplicants.jobId
+            : null,
         applicants: normalizeJobs(data),
       });
     } catch (error) {
-      setSelectedApplicants({
-        jobId: null,
-        applicants: [],
-      });
-      setApplicantsStatus(error.message);
+      if (!options.silent) {
+        setSelectedApplicants({
+          jobId: null,
+          applicants: [],
+        });
+        setApplicantsStatus(error.message);
+      }
     } finally {
-      setIsApplicantsLoading(false);
+      if (!options.silent) {
+        setIsApplicantsLoading(false);
+      }
     }
   }
 
-  async function loadAdminDashboard(activeToken = token) {
+  async function loadAdminDashboard(activeToken = token, options = {}) {
     if (!activeToken) {
       setAdminStatus('Login as an admin to view admin dashboard.');
       return;
     }
 
-    setIsAdminLoading(true);
-    setAdminStatus('');
+    if (!options.silent) {
+      setIsAdminLoading(true);
+      setAdminStatus('');
+    }
 
     try {
       const headers = {
@@ -575,9 +643,13 @@ function App() {
       setAdminJobs(normalizeJobs(jobsData));
       setAdminApplications(normalizeJobs(applicationsData));
     } catch (error) {
-      setAdminStatus(error.message);
+      if (!options.silent) {
+        setAdminStatus(error.message);
+      }
     } finally {
-      setIsAdminLoading(false);
+      if (!options.silent) {
+        setIsAdminLoading(false);
+      }
     }
   }
 
@@ -866,11 +938,28 @@ function App() {
         throw new Error(data.message || 'Could not update application status');
       }
 
+      setSelectedApplicants((currentApplicants) => {
+        if (!currentApplicants?.applicants) {
+          return currentApplicants;
+        }
+
+        return {
+          ...currentApplicants,
+          applicants: currentApplicants.applicants.map((currentApplication) =>
+            currentApplication.id === application.id
+              ? { ...currentApplication, status: nextStatus }
+              : currentApplication,
+          ),
+        };
+      });
+
       if (selectedApplicants?.jobId) {
         await handleViewApplicants(selectedApplicants.jobId);
       } else {
         await loadEmployerApplicants();
       }
+      await loadEmployerJobs(token, { silent: true });
+      await loadJobs(jobFilters, { silent: true });
       setApplicantsStatus('Application status updated.');
     } catch (error) {
       setApplicantsStatus(error.message);
@@ -1059,6 +1148,16 @@ function App() {
     { admin: 0, employer: 0, seeker: 0 },
   );
   const adminStatusCounts = adminApplications.reduce(
+    (counts, application) => {
+      const applicationStatus = getApplicationStatus(application);
+      return {
+        ...counts,
+        [applicationStatus]: (counts[applicationStatus] || 0) + 1,
+      };
+    },
+    { pending: 0, accepted: 0, rejected: 0 },
+  );
+  const seekerApplicationStatusCounts = applications.reduce(
     (counts, application) => {
       const applicationStatus = getApplicationStatus(application);
       return {
@@ -1360,7 +1459,7 @@ function App() {
         <nav className="sidebar-nav" aria-label="Dashboard sections">
           <a href="#jobs">
             <BriefcaseBusiness size={18} />
-            Jobs
+            Browse Jobs
           </a>
           {role === 'seeker' && (
             <a href="#applications">
@@ -1387,72 +1486,87 @@ function App() {
             </a>
           )}
         </nav>
+
+        <div className="sidebar-help-card">
+          <span className="sidebar-help-icon">
+            <HelpCircle size={18} />
+          </span>
+          <div>
+            <strong>Need Help?</strong>
+            <p>Visit our Help Center</p>
+          </div>
+          <a href="#support">
+            Go to Help Center
+            <ExternalLink size={14} />
+          </a>
+        </div>
+
+        <button
+          className="sidebar-logout-button"
+          type="button"
+          onClick={handleLogout}
+        >
+          <LogOut size={18} />
+          Log Out
+        </button>
       </aside>
 
       <section className="app-main">
         <header className="app-topbar">
-          <div>
-            <p className="eyebrow">Dashboard</p>
-              <h1>
-                {role === 'employer'
-                  ? 'Employer Console'
-                  : role === 'admin'
-                    ? 'Admin Console'
-                    : 'Job Seeker Hub'}
-              </h1>
+          <div className="topbar-search">
+            <Search size={20} />
+            <input
+              value={jobFilters.search}
+              onChange={(event) =>
+                updateJobFilter('search', event.target.value)
+              }
+              placeholder="Search jobs, companies, or keywords..."
+              aria-label="Search jobs, companies, or keywords"
+            />
+            <kbd>⌘ K</kbd>
           </div>
-          <div className="profile-card">
-            <div className="profile-identity">
-              <div className="profile-avatar">
-                {profileImage ? (
-                  <img src={profileImage} alt="Profile" />
-                ) : (
-                  <UserRound size={20} />
-                )}
-              </div>
-              <div>
-                <strong>{user.email}</strong>
-                <span>{user.role}</span>
-              </div>
-            </div>
-            <div className="profile-actions">
-              <label className="avatar-upload-button">
-                <UserRound size={16} />
-                Photo
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleProfileImageChange}
-                />
-              </label>
-              {profileImage && (
-                <button
-                  className="secondary-button avatar-remove-button"
-                  type="button"
-                  onClick={removeProfileImage}
-                >
-                  <Trash2 size={16} />
-                  Remove
-                </button>
-              )}
-              <button className="secondary-button logout-button" onClick={handleLogout}>
-                <LogOut size={18} />
-                Logout
-              </button>
-            </div>
+          <div className="topbar-actions">
+            <button className="topbar-icon-button" type="button" aria-label="Notifications">
+              <Bell size={20} />
+              <span>2</span>
+            </button>
+            <button className="topbar-icon-button" type="button" aria-label="Messages">
+              <MessageCircle size={20} />
+            </button>
+            <UserProfileHeader
+              email={user.email}
+              role={user.role}
+              profileImage={profileImage}
+              onPhotoChange={handleProfileImageChange}
+              onRemovePhoto={removeProfileImage}
+              onLogout={handleLogout}
+            />
           </div>
         </header>
 
         <section className="dashboard-hero">
           <div>
-            <p className="eyebrow">Active Portal</p>
+            <p className="eyebrow">
+              {role === 'employer'
+                ? 'Employer Dashboard'
+                : role === 'admin'
+                  ? 'Admin Dashboard'
+                  : 'Dashboard'}
+            </p>
             <h2>
               {role === 'employer'
-                ? 'Manage postings, applicants, and hiring decisions.'
+                ? 'Welcome back, hiring team.'
                 : role === 'admin'
-                  ? 'Monitor users, jobs, and applications from one control panel.'
-                  : 'Search jobs, apply faster, and track every application.'}
+                  ? 'Welcome back, admin.'
+                  : `Welcome back, ${user.email.split('@')[0]}.`}
             </h2>
+            <p>
+              {role === 'employer'
+                ? 'Track job posts, applicants, and hiring activity in one place.'
+                : role === 'admin'
+                  ? 'Monitor users, jobs, and applications from one clean control panel.'
+                  : 'Track your job search progress and application activity.'}
+            </p>
             {role === 'seeker' && (
               <div className="hero-cta-row">
                 <a className="hero-cta primary-cta" href="#jobs">
@@ -1472,16 +1586,36 @@ function App() {
               <strong>{jobs.length}</strong>
             </div>
             {role === 'seeker' && (
-              <div>
-                <span>My Applications</span>
-                <strong>{applications.length}</strong>
-              </div>
+              <>
+                <div>
+                  <span>Applications</span>
+                  <strong>{applications.length}</strong>
+                </div>
+                <div>
+                  <span>Under Review</span>
+                  <strong>{seekerApplicationStatusCounts.pending || 0}</strong>
+                </div>
+                <div>
+                  <span>Offers</span>
+                  <strong>{seekerApplicationStatusCounts.accepted || 0}</strong>
+                </div>
+              </>
             )}
             {role === 'employer' && (
-              <div>
-                <span>Posted Jobs</span>
-                <strong>{employerJobs.length}</strong>
-              </div>
+              <>
+                <div>
+                  <span>Posted Jobs</span>
+                  <strong>{employerJobs.length}</strong>
+                </div>
+                <div>
+                  <span>Applicants</span>
+                  <strong>{selectedEmployerApplicants.length}</strong>
+                </div>
+                <div>
+                  <span>Pending Review</span>
+                  <strong>{employerApplicationStatusCounts.pending || 0}</strong>
+                </div>
+              </>
             )}
             {role === 'admin' && (
               <>
@@ -1492,6 +1626,10 @@ function App() {
                 <div>
                   <span>Applications</span>
                   <strong>{adminApplications.length}</strong>
+                </div>
+                <div>
+                  <span>Total Jobs</span>
+                  <strong>{adminJobs.length}</strong>
                 </div>
               </>
             )}
@@ -2371,118 +2509,20 @@ function App() {
         )}
 
         <div className="job-grid">
-          {jobs.map((job) => {
-            const applicationStatus = applicationStatusByJobId.get(job.id);
-            const isApplied = appliedJobIds.has(job.id);
-            const jobStatusLabel =
-              applicationStatus === 'rejected'
-                ? 'Rejected'
-                : applicationStatus === 'pending'
-                  ? 'Pending'
-                  : isApplied
-                    ? 'Applied'
-                    : null;
-            const jobStatusClass =
-              applicationStatus === 'rejected'
-                ? 'job-status-rejected'
-                : applicationStatus === 'pending'
-                  ? 'job-status-pending'
-                  : isApplied
-                    ? 'job-status-applied'
-                    : '';
-
-            return (
-              <article className="job-card" key={job.id}>
-                <img
-                  className="job-card-image"
-                  src={getJobImage(job)}
-                  alt={`${job.title} role`}
-                />
-                <div className="job-card-header">
-                  <div className="company-logo" aria-hidden="true">
-                    {getCompanyInitials(job.company)}
-                  </div>
-                  <div>
-                    <h3>{job.title}</h3>
-                    <p>{job.company}</p>
-                  </div>
-                  {jobStatusLabel && (
-                    <span className={`job-status-badge ${jobStatusClass}`}>
-                      {jobStatusLabel}
-                    </span>
-                  )}
-                </div>
-                <div className="job-badges">
-                  <span>
-                    <MapPin size={14} />
-                    {job.location}
-                  </span>
-                  <span>
-                    <DollarSign size={14} />
-                    {formatSalary(job.salary)}
-                  </span>
-                </div>
-                <dl>
-                  <div>
-                    <dt>Location</dt>
-                    <dd>{job.location}</dd>
-                  </div>
-                  <div>
-                    <dt>Salary</dt>
-                    <dd>{formatSalary(job.salary)}</dd>
-                  </div>
-                </dl>
-                <div className="job-extra-grid">
-                  {job.experience && <span>Experience: {job.experience}</span>}
-                  {job.jobType && <span>Type: {job.jobType}</span>}
-                  {job.workplaceType && (
-                    <span>Workplace: {job.workplaceType}</span>
-                  )}
-                  {job.vacancy && <span>Vacancy: {job.vacancy}</span>}
-                  {job.deadline && <span>Deadline: {job.deadline}</span>}
-                </div>
-                {job.educationRequirement && (
-                  <div className="job-info-block">
-                    <strong>Education</strong>
-                    <p>{job.educationRequirement}</p>
-                  </div>
-                )}
-                {job.skills && (
-                  <div className="job-info-block">
-                    <strong>Skills</strong>
-                    <p>{job.skills}</p>
-                  </div>
-                )}
-                <p className="job-description">{job.description}</p>
-                {role === 'seeker' && (
-                  <div className="apply-action">
-                    {jobStatusLabel && (
-                      <span className={`applied-badge ${jobStatusClass}`}>
-                        {jobStatusLabel}
-                      </span>
-                    )}
-                    <button
-                      className={isApplied ? 'apply-button applied' : 'apply-button'}
-                      onClick={() => openApplyModal(job)}
-                      disabled={applyingJobId === job.id || isApplied}
-                    >
-                      {isApplied ? <CheckCircle2 size={18} /> : <Send size={18} />}
-                      {isApplied
-                        ? 'Application Sent'
-                        : applyingJobId === job.id
-                          ? 'Applying...'
-                          : 'Apply Now'}
-                    </button>
-                  </div>
-                )}
-                {role === 'employer' && (
-                  <div className="employer-job-note">
-                    Manage applicants from My Posted Jobs.
-                  </div>
-                )}
-              </article>
-            );
-          })}
+          {jobs.map((job) => (
+            <JobCard
+              key={job.id}
+              job={job}
+              role={role}
+              isApplied={appliedJobIds.has(job.id)}
+              applicationStatus={applicationStatusByJobId.get(job.id)}
+              isApplying={applyingJobId === job.id}
+              getCompanyInitials={getCompanyInitials}
+              getJobImage={getJobImage}
+              formatSalary={formatSalary}
+              onApply={openApplyModal}
+            />
+          ))}
         </div>
 
         {jobs.length === 0 && !jobsStatus && !isJobsLoading && (
