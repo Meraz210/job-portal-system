@@ -36,6 +36,14 @@ Default local URLs:
 - Backend API: `http://localhost:8000`
 - Swagger API docs: `http://localhost:8000/api/docs`
 
+## Live Demo
+
+Deployment links can be added here after hosting:
+
+- Frontend: `Not deployed yet`
+- Backend API: `Not deployed yet`
+- API docs: `Not deployed yet`
+
 ## Tech Stack
 
 Frontend:
@@ -175,9 +183,15 @@ MAIL_FROM="Job Portal <no-reply@example.com>"
 
 Important notes:
 
-- The frontend currently uses `http://localhost:8000` as `API_URL` in `frontend/src/main.jsx`.
+- The frontend uses `VITE_API_URL` when configured and falls back to `http://localhost:8000`.
 - Backend CORS allows `http://localhost:5173` and `http://127.0.0.1:5173`.
 - TypeORM `synchronize` is enabled for local development. For production, use migrations instead.
+
+Create `frontend/.env` from `frontend/.env.example` when the backend URL is different from the default.
+
+```env
+VITE_API_URL=http://localhost:8000
+```
 
 ## Local Setup
 
@@ -233,7 +247,15 @@ cd frontend
 npm install
 ```
 
-### 7. Start frontend
+### 7. Configure frontend environment
+
+```bash
+cp .env.example .env
+```
+
+Keep `VITE_API_URL=http://localhost:8000` for the default local backend.
+
+### 8. Start frontend
 
 ```bash
 cd frontend
@@ -593,6 +615,122 @@ Then check:
 ```bash
 git status
 ```
+
+## Manual QA Checklist
+
+Before final submission or deployment, verify these flows in the browser:
+
+Detailed checklist file:
+
+```text
+docs/qa-checklist.md
+```
+
+- Seeker registration and login
+- Employer registration and login
+- Admin login with the seeded admin account
+- Employer creates, edits, and deletes a job
+- Seeker searches jobs and applies with CV upload
+- Seeker tracks submitted applications
+- Employer views applicants and updates application status
+- Admin views users, jobs, and applications
+- Logout and expired/invalid protected-session behavior
+- Invalid login error state
+- Mobile and tablet layouts
+
+Pages and sections to inspect:
+
+- Login and register page
+- Landing/auth hero section
+- Jobs page
+- Apply job form
+- Seeker dashboard
+- Employer dashboard
+- Admin dashboard
+- Applicants panel
+- Profile header
+- Support section
+- Tables and forms
+
+Recommended responsive widths:
+
+- `1440px` desktop
+- `1280px` laptop
+- `1024px` tablet
+- `768px` tablet
+- `430px` mobile
+- `390px` mobile
+
+Layout checks:
+
+- No overlapping cards
+- No broken or vertically stacked words
+- No horizontal overflow except intentionally scrollable tables
+- Buttons remain clickable
+- Forms are aligned
+- Tables remain readable
+- Sidebar and topbar respond cleanly
+- Images are not clipped
+- Status badges do not overflow
+
+## Screenshots
+
+Add screenshots before submission or portfolio publishing. Save files under `docs/screenshots/` and keep the names below so the README links work.
+
+| Screen | Preview |
+| --- | --- |
+| Auth page | ![Auth page](docs/screenshots/auth-page.png) |
+| Landing page | ![Landing page](docs/screenshots/landing-page.png) |
+| Jobs page | ![Jobs page](docs/screenshots/jobs-page.png) |
+| Seeker dashboard | ![Seeker dashboard](docs/screenshots/seeker-dashboard.png) |
+| Employer dashboard | ![Employer dashboard](docs/screenshots/employer-dashboard.png) |
+| Applicants page | ![Applicants page](docs/screenshots/applicants-page.png) |
+| Admin dashboard | ![Admin dashboard](docs/screenshots/admin-dashboard.png) |
+| Mobile responsive view | ![Mobile responsive view](docs/screenshots/mobile-responsive.png) |
+
+Suggested screenshot command flow:
+
+```text
+docs/screenshots/auth-page.png
+docs/screenshots/landing-page.png
+docs/screenshots/jobs-page.png
+docs/screenshots/seeker-dashboard.png
+docs/screenshots/employer-dashboard.png
+docs/screenshots/applicants-page.png
+docs/screenshots/admin-dashboard.png
+docs/screenshots/mobile-responsive.png
+```
+
+Screenshot notes are available in:
+
+```text
+docs/screenshots/README.md
+```
+
+## Deployment Notes
+
+Deployment guidance is available in:
+
+```text
+docs/deployment.md
+```
+
+## Known Limitations
+
+- Real-time updates use lightweight polling rather than WebSockets or Server-Sent Events.
+- TypeORM `synchronize` is enabled for local development and should be replaced with migrations for production.
+- Frontend stores JWT in `localStorage`; a hardened production deployment should review token storage and expiry strategy.
+- Email delivery depends on SMTP configuration and may need provider-specific setup.
+- Uploaded CV files are stored on the local filesystem; production deployments should consider object storage.
+
+## Future Improvements
+
+- Add database migrations and production deployment configuration.
+- Add pagination for large job, user, and application lists.
+- Add WebSocket/SSE updates for applicant status changes.
+- Add password reset and email verification.
+- Add richer employer/company profiles.
+- Add automated browser tests for core role-based flows.
 
 ## Troubleshooting
 

@@ -41,7 +41,7 @@ import frontendDeveloperImage from './assets/images/frontend-developer.png';
 import qaImage from './assets/images/qa.png';
 import reactDeveloperImage from './assets/images/react-developer.png';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const APPLICATION_STATUSES = ['pending', 'accepted', 'rejected'];
 const emptyJobForm = {
   title: '',

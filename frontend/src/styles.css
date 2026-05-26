@@ -14,9 +14,9 @@
   --border-strong: #c4d2da;
   --text: #13212b;
   --muted: #647483;
-  --primary: #6d5dfc;
-  --primary-dark: #4f46e5;
-  --primary-soft: #f0edff;
+  --primary: #1173bb;
+  --primary-dark: #0b5b94;
+  --primary-soft: #e8f3fb;
   --danger: #b42318;
   --danger-dark: #912018;
   --accent: #38bdf8;
@@ -2795,802 +2795,6 @@ button:disabled {
   width: 100%;
 }
 
-/* JobPortal reference style refresh */
-.login-shell {
-  min-height: 100vh;
-  padding: 0;
-  background: #f8f9ff;
-}
-
-.landing-layout {
-  width: min(100%, 1440px);
-  min-height: 100vh;
-  grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
-  border: 1px solid #e8ebf3;
-  border-radius: 0;
-  background: #ffffff;
-  box-shadow: none;
-}
-
-.landing-hero {
-  min-height: 100vh;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
-  gap: 28px;
-  padding: clamp(28px, 5vw, 64px);
-  color: #090f1f;
-  background:
-    radial-gradient(circle at 74% 22%, rgba(109, 93, 252, 0.12), transparent 20rem),
-    radial-gradient(circle at 92% 66%, rgba(56, 189, 248, 0.12), transparent 16rem),
-    linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
-}
-
-.landing-hero::before {
-  content: "";
-  position: absolute;
-  inset: 70px 34px auto auto;
-  width: min(42vw, 520px);
-  height: min(42vw, 520px);
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(109, 93, 252, 0.12), rgba(56, 189, 248, 0.08));
-  filter: blur(2px);
-}
-
-.landing-hero::after {
-  background-image:
-    radial-gradient(rgba(109, 93, 252, 0.26) 1px, transparent 1px);
-  background-size: 22px 22px;
-  background-position: right 90px top 120px;
-  opacity: 0.42;
-}
-
-.login-brand-lockup {
-  color: #0f172a;
-}
-
-.login-brand-lockup span {
-  color: #697386;
-}
-
-.landing-hero .eyebrow {
-  width: fit-content;
-  padding: 8px 14px;
-  border-radius: 999px;
-  color: var(--primary-dark);
-  background: #f0edff;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.landing-hero h1 {
-  max-width: 720px;
-  color: #090f1f;
-  font-size: clamp(42px, 5vw, 72px);
-  line-height: 1.08;
-}
-
-.landing-hero h1 span {
-  color: var(--primary);
-}
-
-.landing-hero p {
-  max-width: 560px;
-  color: #667085;
-  font-size: 18px;
-  line-height: 1.7;
-}
-
-.hero-actions button {
-  min-height: 52px;
-  border: 1px solid #e6e9f2;
-}
-
-.hero-actions button:not(.hero-secondary-button) {
-  color: #ffffff;
-  background: linear-gradient(135deg, #7c3aed, #4f46e5) !important;
-  box-shadow: 0 18px 34px rgba(109, 93, 252, 0.28);
-}
-
-.hero-actions .hero-secondary-button {
-  color: #111827;
-  background: #ffffff !important;
-}
-
-.landing-illustration-card {
-  align-self: center;
-  padding: 12px;
-  border: 8px solid #ffffff;
-  border-radius: 28px;
-  background: linear-gradient(180deg, #f3efff, #ffffff);
-  box-shadow: 0 28px 72px rgba(83, 70, 170, 0.2);
-}
-
-.landing-illustration {
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
-  border-radius: 20px;
-  background: #f6f2ff;
-}
-
-.hero-stats {
-  align-self: end;
-}
-
-.hero-stats div {
-  min-height: 96px;
-  border: 1px solid #edf0f7;
-  border-radius: 18px;
-  background: #ffffff;
-  box-shadow: 0 18px 44px rgba(16, 24, 40, 0.08);
-}
-
-.hero-stats svg {
-  color: var(--primary);
-}
-
-.hero-stats strong {
-  color: #101828;
-}
-
-.hero-stats span {
-  color: #667085;
-}
-
-.login-only-panel {
-  padding: clamp(28px, 5vw, 58px);
-  border-left: 1px solid #edf0f7;
-  background:
-    radial-gradient(circle at 82% 14%, rgba(109, 93, 252, 0.12), transparent 18rem),
-    #ffffff;
-}
-
-.brand-mark,
-.login-brand-mark {
-  border-radius: 14px;
-  background: linear-gradient(135deg, #6d5dfc, #4f46e5);
-  box-shadow: 0 14px 30px rgba(109, 93, 252, 0.24);
-}
-
-.app-shell {
-  grid-template-columns: 270px minmax(0, 1fr);
-  background: #f7f8fc;
-}
-
-.app-sidebar {
-  border-right: 1px solid #edf0f7;
-  background: #ffffff;
-  box-shadow: none;
-}
-
-.sidebar-nav a {
-  color: #465166;
-  border-radius: 10px;
-}
-
-.sidebar-nav a:hover,
-.sidebar-nav a.active {
-  color: var(--primary-dark);
-  border-color: transparent;
-  background: #f0edff;
-  box-shadow: none;
-}
-
-.sidebar-nav a.active {
-  box-shadow: inset 3px 0 0 var(--primary);
-}
-
-.app-main {
-  width: min(100% - 48px, 1320px);
-}
-
-.app-topbar {
-  background: rgba(247, 248, 252, 0.84);
-}
-
-.profile-card {
-  min-width: min(430px, 100%);
-  border: 1px solid #edf0f7;
-  border-radius: 16px;
-  background: #ffffff;
-  box-shadow: 0 12px 34px rgba(16, 24, 40, 0.06);
-}
-
-.dashboard-hero {
-  min-height: 230px;
-  border: 1px solid #edf0f7;
-  border-radius: 22px;
-  color: #101828;
-  background:
-    radial-gradient(circle at 85% 18%, rgba(109, 93, 252, 0.16), transparent 17rem),
-    linear-gradient(135deg, #ffffff 0%, #f8f7ff 100%);
-  box-shadow: 0 18px 48px rgba(16, 24, 40, 0.07);
-}
-
-.dashboard-hero::after {
-  background-image:
-    radial-gradient(rgba(109, 93, 252, 0.24) 1px, transparent 1px);
-  background-size: 20px 20px;
-  background-position: right 48px top 42px;
-  opacity: 0.5;
-}
-
-.dashboard-hero h2 {
-  color: #101828;
-}
-
-.dashboard-hero .eyebrow,
-.dashboard-hero p {
-  color: #667085;
-}
-
-.primary-cta,
-.apply-button,
-button:not(.secondary-button):not(.danger-button):not(.icon-button) {
-  color: #ffffff;
-  background: linear-gradient(135deg, #7c3aed, #4f46e5) !important;
-  box-shadow: 0 16px 30px rgba(109, 93, 252, 0.26);
-}
-
-.secondary-cta,
-.secondary-button {
-  color: #344054;
-  border: 1px solid #e6e9f2;
-  background: #ffffff !important;
-}
-
-.portal-summary div,
-.jobs-summary-card,
-.admin-metric-card,
-.admin-chart-card,
-.employer-chart-card,
-.job-filter-panel,
-.dashboard-panel,
-.job-card,
-.application-card,
-.posted-job-card,
-.admin-users-row,
-.admin-row {
-  border: 1px solid #edf0f7;
-  border-radius: 18px;
-  background: #ffffff;
-  box-shadow: 0 14px 36px rgba(16, 24, 40, 0.06);
-}
-
-.hero-summary div {
-  border-color: #edf0f7;
-  background: #ffffff;
-  box-shadow: 0 14px 36px rgba(16, 24, 40, 0.06);
-}
-
-.hero-summary span,
-.hero-summary strong {
-  color: #101828;
-}
-
-.jobs-layout,
-.applications-section,
-.employer-dashboard {
-  border: 1px solid #edf0f7;
-  border-radius: 22px;
-  background: #ffffff;
-  box-shadow: 0 18px 44px rgba(16, 24, 40, 0.06);
-}
-
-.admin-dashboard {
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  border-radius: 22px;
-  color: #e5eefc;
-  background:
-    radial-gradient(circle at 82% 0%, rgba(109, 93, 252, 0.18), transparent 28rem),
-    linear-gradient(135deg, #0a1324 0%, #111a2e 100%);
-  box-shadow: 0 26px 70px rgba(15, 23, 42, 0.2);
-}
-
-.admin-dashboard .dashboard-header {
-  border-bottom-color: rgba(226, 232, 240, 0.1);
-}
-
-.admin-dashboard h2,
-.admin-dashboard .admin-chart-header strong,
-.admin-dashboard .panel-header h2 {
-  color: #ffffff;
-}
-
-.admin-dashboard p,
-.admin-dashboard span,
-.admin-dashboard small,
-.admin-dashboard .chart-helper {
-  color: #9fb0c8;
-}
-
-.admin-dashboard .admin-metric-card,
-.admin-dashboard .admin-chart-card,
-.admin-dashboard .dashboard-panel,
-.admin-dashboard .admin-row,
-.admin-dashboard .admin-users-row {
-  border-color: rgba(148, 163, 184, 0.13);
-  background: rgba(15, 23, 42, 0.62);
-  box-shadow: 0 18px 42px rgba(2, 6, 23, 0.22);
-}
-
-.admin-dashboard .admin-table-head,
-.admin-dashboard .admin-users-table-head {
-  border-color: rgba(148, 163, 184, 0.16);
-  background: rgba(30, 41, 59, 0.82);
-}
-
-.admin-dashboard .admin-row strong,
-.admin-dashboard .admin-users-row strong,
-.admin-dashboard .admin-summary-grid strong {
-  color: #ffffff;
-}
-
-.job-card:hover,
-.application-card:hover,
-.posted-job-card:hover,
-.admin-users-row:hover,
-.admin-row:hover {
-  border-color: rgba(109, 93, 252, 0.22);
-  box-shadow: 0 22px 58px rgba(16, 24, 40, 0.1);
-  transform: translateY(-3px);
-}
-
-.status-pending,
-.job-status-pending,
-.applied-badge.job-status-pending {
-  color: #b45309;
-  background: #fff7ed;
-  border-color: #fed7aa;
-}
-
-.status-accepted,
-.job-status-applied,
-.applied-badge.job-status-applied {
-  color: #059669;
-  background: #ecfdf3;
-  border-color: #bbf7d0;
-}
-
-.status-rejected,
-.job-status-rejected,
-.applied-badge.job-status-rejected {
-  color: #dc2626;
-  background: #fef2f2;
-  border-color: #fecaca;
-}
-
-/* Modern visual refresh */
-.landing-layout,
-.auth-panel,
-.session-panel,
-.jobs-layout,
-.applications-section,
-.employer-dashboard,
-.admin-dashboard,
-.dashboard-panel,
-.create-job-panel,
-.applicants-panel,
-.overview-card,
-.session-chip-panel,
-.profile-card,
-.dashboard-hero {
-  border-color: rgba(196, 210, 218, 0.82);
-  border-radius: 18px;
-}
-
-.landing-layout {
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 28px;
-  box-shadow: 0 32px 90px rgba(15, 23, 42, 0.16);
-}
-
-.landing-hero {
-  isolation: isolate;
-  padding: clamp(28px, 4vw, 52px);
-  background:
-    linear-gradient(135deg, rgba(3, 78, 74, 0.94), rgba(13, 98, 123, 0.82)),
-    url("https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1400&q=82");
-}
-
-.landing-hero::after,
-.dashboard-hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.24), transparent 22rem),
-    radial-gradient(circle at 84% 12%, rgba(167, 243, 208, 0.2), transparent 18rem);
-}
-
-.landing-hero h1,
-.dashboard-hero h2 {
-  color: #ffffff;
-  letter-spacing: 0;
-}
-
-.landing-hero h1 {
-  font-weight: 750;
-}
-
-.landing-hero p,
-.dashboard-hero p {
-  color: rgba(255, 255, 255, 0.88);
-}
-
-.hero-stats div,
-.landing-illustration-card {
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 18px 46px rgba(2, 6, 23, 0.2);
-}
-
-.login-only-panel {
-  background:
-    radial-gradient(circle at top right, rgba(15, 118, 110, 0.08), transparent 16rem),
-    #ffffff;
-}
-
-.auth-tabs {
-  padding: 5px;
-  border: 1px solid #e0e8ed;
-  border-radius: 14px;
-  background: #f4f8fa;
-}
-
-.auth-tabs button {
-  border-radius: 10px;
-}
-
-.auth-tabs button.active {
-  background: #ffffff;
-  box-shadow: 0 10px 26px rgba(18, 38, 54, 0.09);
-}
-
-.app-shell {
-  background:
-    radial-gradient(circle at 22% 0%, rgba(15, 118, 110, 0.12), transparent 28rem),
-    radial-gradient(circle at 90% 8%, rgba(37, 99, 235, 0.1), transparent 26rem),
-    linear-gradient(180deg, #f8fbfc 0, var(--bg) 480px);
-}
-
-.app-sidebar {
-  border-right-color: rgba(216, 227, 232, 0.88);
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 10px 0 38px rgba(15, 23, 42, 0.05);
-}
-
-.sidebar-nav a {
-  border: 1px solid transparent;
-  border-radius: 14px;
-}
-
-.sidebar-nav a:hover,
-.sidebar-nav a.active {
-  border-color: rgba(15, 118, 110, 0.12);
-  background:
-    linear-gradient(135deg, rgba(228, 244, 241, 0.98), rgba(234, 241, 255, 0.78));
-  box-shadow: 0 12px 26px rgba(18, 38, 54, 0.06);
-}
-
-.app-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  padding: 14px 0;
-  background: rgba(238, 244, 246, 0.72);
-  backdrop-filter: blur(16px);
-}
-
-.profile-card {
-  border-color: rgba(216, 227, 232, 0.9);
-  background: rgba(255, 255, 255, 0.86);
-  box-shadow: var(--shadow-soft);
-}
-
-.profile-avatar {
-  border: 3px solid #ffffff;
-  background:
-    linear-gradient(135deg, rgba(15, 118, 110, 0.16), rgba(37, 99, 235, 0.12)),
-    #f8fbfc;
-}
-
-.dashboard-hero {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  border: 0;
-  border-radius: 24px;
-  background:
-    linear-gradient(135deg, rgba(10, 92, 86, 0.94), rgba(26, 86, 153, 0.82)),
-    url("https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=82");
-  box-shadow: 0 26px 70px rgba(12, 75, 81, 0.18);
-}
-
-.dashboard-hero > * {
-  position: relative;
-  z-index: 1;
-}
-
-.portal-summary div,
-.jobs-summary-card,
-.session-chip {
-  border-color: rgba(216, 227, 232, 0.85);
-  border-radius: 16px;
-  box-shadow: var(--shadow-soft);
-}
-
-.hero-summary div {
-  border-color: rgba(255, 255, 255, 0.26);
-  background: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 16px 34px rgba(2, 6, 23, 0.16);
-}
-
-.dashboard-header {
-  align-items: flex-start;
-}
-
-.dashboard-header h2,
-.jobs-header h2,
-.panel-header h2 {
-  font-weight: 800;
-}
-
-.dashboard-header p,
-.jobs-header p,
-.job-description,
-.application-card p,
-.posted-job-card p {
-  font-size: 15px;
-  line-height: 1.65;
-}
-
-.jobs-layout,
-.applications-section,
-.employer-dashboard,
-.admin-dashboard {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 252, 0.96)),
-    #ffffff;
-}
-
-.dashboard-panel,
-.create-job-panel,
-.applicants-panel {
-  background: rgba(248, 251, 252, 0.92);
-}
-
-.job-filter-panel,
-.dashboard-job-form,
-.apply-form-card {
-  border-color: rgba(216, 227, 232, 0.92);
-  border-radius: 18px;
-  background:
-    linear-gradient(180deg, #ffffff 0%, #f8fbfc 100%);
-  box-shadow: var(--shadow-soft);
-}
-
-.job-card,
-.application-card,
-.posted-job-card,
-.admin-users-row,
-.admin-row {
-  border-color: rgba(216, 227, 232, 0.95);
-  border-radius: 20px;
-  box-shadow: 0 14px 36px rgba(18, 38, 54, 0.07);
-}
-
-.job-card:hover,
-.application-card:hover,
-.posted-job-card:hover,
-.admin-users-row:hover,
-.admin-row:hover {
-  border-color: rgba(15, 118, 110, 0.24);
-  box-shadow: 0 24px 52px rgba(18, 38, 54, 0.12);
-  transform: translateY(-3px);
-}
-
-.job-card-image {
-  border-bottom-color: rgba(216, 227, 232, 0.9);
-}
-
-.job-card h3,
-.application-card h3,
-.posted-job-card h3 {
-  font-size: clamp(18px, 1.7vw, 21px);
-  line-height: 1.28;
-}
-
-.job-badges span,
-.job-extra-grid span,
-.role-pill,
-.status-badge,
-.job-status-badge,
-.applied-badge,
-.user-status-pill {
-  letter-spacing: 0.01em;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.52);
-}
-
-.status-pending,
-.job-status-pending,
-.applied-badge.job-status-pending {
-  color: #8a4b08;
-  background: #fff5cf;
-  border-color: #facc15;
-}
-
-.status-accepted,
-.job-status-applied,
-.applied-badge.job-status-applied {
-  color: #047857;
-  background: #dcfce7;
-  border-color: #86efac;
-}
-
-.status-rejected,
-.job-status-rejected,
-.applied-badge.job-status-rejected {
-  color: #b42318;
-  background: #fee2e2;
-  border-color: #fca5a5;
-}
-
-.empty-state,
-.mini-empty-state {
-  border: 1px dashed rgba(196, 210, 218, 0.95);
-  border-radius: 16px;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(15, 118, 110, 0.08), transparent 16rem),
-    #ffffff;
-  color: var(--muted);
-  font-weight: 700;
-}
-
-.company-logo,
-.brand-mark,
-.summary-icon,
-.session-chip-icon,
-.profile-avatar {
-  box-shadow: 0 12px 28px rgba(15, 118, 110, 0.16);
-}
-
-button,
-.hero-cta,
-.apply-button,
-.secondary-button,
-.danger-button,
-.avatar-upload-button,
-.avatar-remove-button,
-.logout-button {
-  border-radius: 12px;
-}
-
-button:not(.secondary-button):not(.danger-button):not(.icon-button) {
-  background: linear-gradient(135deg, var(--primary), #0b8f77);
-  box-shadow: 0 12px 26px rgba(15, 118, 110, 0.18);
-}
-
-button:hover:not(:disabled) {
-  box-shadow: 0 16px 34px rgba(15, 118, 110, 0.2);
-}
-
-.auth-tabs button {
-  color: var(--muted);
-  background: transparent !important;
-  box-shadow: none;
-}
-
-.auth-tabs button.active {
-  color: var(--primary-dark);
-  background: #ffffff !important;
-  box-shadow: 0 10px 26px rgba(18, 38, 54, 0.09);
-}
-
-.hero-actions button {
-  background: #ffffff !important;
-  box-shadow: 0 14px 30px rgba(2, 6, 23, 0.14);
-}
-
-.hero-actions .hero-secondary-button {
-  background: rgba(255, 255, 255, 0.13) !important;
-}
-
-input,
-select,
-textarea {
-  border-radius: 12px;
-  background: #fbfdfe;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  outline-color: var(--ring);
-  background: #ffffff;
-}
-
-.admin-table-head,
-.admin-users-table-head {
-  border-radius: 14px;
-  background: linear-gradient(180deg, #f2f7f8 0%, #eaf2f4 100%);
-}
-
-/* Final reference-theme overrides */
-.landing-layout {
-  width: min(100%, 1440px);
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.landing-hero {
-  color: #090f1f;
-  background:
-    radial-gradient(circle at 74% 22%, rgba(109, 93, 252, 0.12), transparent 20rem),
-    radial-gradient(circle at 92% 66%, rgba(56, 189, 248, 0.12), transparent 16rem),
-    linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
-}
-
-.landing-hero h1 {
-  color: #090f1f;
-}
-
-.landing-hero p {
-  color: #667085;
-}
-
-.landing-hero .eyebrow {
-  color: var(--primary-dark);
-}
-
-.hero-actions button:not(.hero-secondary-button),
-button:not(.secondary-button):not(.danger-button):not(.icon-button) {
-  color: #ffffff;
-  background: linear-gradient(135deg, #7c3aed, #4f46e5) !important;
-  box-shadow: 0 16px 30px rgba(109, 93, 252, 0.26);
-}
-
-.hero-actions .hero-secondary-button,
-.secondary-button {
-  color: #344054;
-  background: #ffffff !important;
-}
-
-.company-logo,
-.brand-mark,
-.summary-icon,
-.session-chip-icon,
-.profile-avatar {
-  box-shadow: 0 12px 28px rgba(109, 93, 252, 0.16);
-}
-
-.dashboard-hero {
-  color: #101828;
-  background:
-    radial-gradient(circle at 85% 18%, rgba(109, 93, 252, 0.16), transparent 17rem),
-    linear-gradient(135deg, #ffffff 0%, #f8f7ff 100%);
-}
-
-.dashboard-hero h2 {
-  color: #101828;
-}
-
-.dashboard-hero p,
-.dashboard-hero .eyebrow {
-  color: #667085;
-}
-
-.admin-dashboard {
-  background:
-    radial-gradient(circle at 82% 0%, rgba(109, 93, 252, 0.18), transparent 28rem),
-    linear-gradient(135deg, #0a1324 0%, #111a2e 100%);
-}
-
-.admin-dashboard .admin-table-head,
-.admin-dashboard .admin-users-table-head {
-  background: rgba(30, 41, 59, 0.82);
-}
-
 /* Dashboard layout matching the provided reference */
 .app-shell {
   grid-template-columns: 286px minmax(0, 1fr);
@@ -5013,5 +4217,130 @@ button:not(.secondary-button):not(.danger-button):not(.icon-button):not(.topbar-
   .jobs-header h2,
   .dashboard-header h2 {
     font-size: 22px;
+  }
+}
+
+/* Dashboard visual hierarchy simplification */
+.dashboard-hero {
+  gap: 18px;
+}
+
+.hero-summary div,
+.jobs-summary-card,
+.admin-metric-card,
+.employer-big-stat {
+  min-height: 128px;
+  padding: 20px;
+  border-color: #e2e8f0;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.hero-summary strong,
+.jobs-summary-card strong,
+.admin-summary-grid strong {
+  font-size: clamp(28px, 3vw, 34px);
+}
+
+.dashboard-header,
+.jobs-header,
+.panel-header {
+  padding-bottom: 16px;
+  border-bottom-color: #e2e8f0;
+}
+
+.dashboard-header h2,
+.jobs-header h2,
+.panel-header h2 {
+  color: #0f172a;
+  font-size: clamp(22px, 2vw, 28px);
+}
+
+.dashboard-header p,
+.jobs-header p {
+  color: #64748b;
+}
+
+.dashboard-grid,
+.admin-table-grid,
+.employer-analytics-grid,
+.admin-analytics-grid {
+  gap: 16px;
+}
+
+.dashboard-panel,
+.admin-chart-card,
+.employer-chart-card,
+.create-job-panel,
+.applicants-panel {
+  border-color: #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+}
+
+.admin-dashboard .dashboard-header h2,
+.admin-dashboard .panel-header h2,
+.admin-dashboard .admin-chart-header strong {
+  color: #ffffff;
+}
+
+.admin-dashboard :is(.dashboard-panel, .admin-chart-card, .admin-metric-card) {
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.2);
+}
+
+.admin-table-head,
+.admin-users-table-head,
+.applicant-table-head {
+  letter-spacing: 0.03em;
+}
+
+.admin-row,
+.admin-users-row,
+.applicant-row {
+  min-height: 50px;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.admin-row:hover,
+.admin-users-row:hover,
+.applicant-row:hover {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+}
+
+.status-select,
+.admin-users-actions select {
+  border-color: #cbd5e1;
+  border-radius: 10px;
+}
+
+.job-filter-panel,
+.dashboard-job-form,
+.apply-form-card {
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.05);
+}
+
+.jobs-empty-state,
+.empty-state,
+.mini-empty-state {
+  padding: 24px;
+}
+
+@media (max-width: 780px) {
+  .dashboard-hero {
+    gap: 14px;
+  }
+
+  .hero-summary div,
+  .jobs-summary-card,
+  .admin-metric-card {
+    padding: 18px;
+  }
+
+  .dashboard-grid,
+  .admin-table-grid,
+  .employer-analytics-grid,
+  .admin-analytics-grid {
+    gap: 14px;
   }
 }
