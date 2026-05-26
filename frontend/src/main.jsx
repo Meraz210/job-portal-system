@@ -34,10 +34,10 @@ import ApplyJobForm from './ApplyJobForm.jsx';
 import JobCard from './JobCard.jsx';
 import UserProfileHeader from './UserProfileHeader.jsx';
 import './styles.css';
+import authHiringDashboardImage from './assets/images/auth-hiring-dashboard.png';
 import backendDeveloperImage from './assets/images/backend-developer.png';
 import digitalMarketingImage from './assets/images/digital-marketing.png';
 import frontendDeveloperImage from './assets/images/frontend-developer.png';
-import jobPortalImage from './assets/images/job-portal.png';
 import qaImage from './assets/images/qa.png';
 import reactDeveloperImage from './assets/images/react-developer.png';
 
@@ -1228,38 +1228,37 @@ function App() {
                 <span>Hiring workspace for focused teams</span>
               </div>
             </div>
-            <div className="hero-copy">
-              <h1>
-                Find talent and opportunities from one focused{' '}
-                <span>workspace.</span>
-              </h1>
-              <p>
-                A role-based hiring platform for seekers and employers with job
-                search, applications, applicant review, and protected sessions.
-              </p>
-            </div>
             <div className="landing-illustration-card">
               <img
-                src={jobPortalImage}
+                src={authHiringDashboardImage}
                 alt="Job portal hiring illustration"
                 className="landing-illustration"
               />
             </div>
+            <div className="hero-copy">
+              <h1>
+                Hire smarter. <span>Apply faster.</span>
+              </h1>
+              <p>
+                A secure job portal workspace for seekers, employers, and admins
+                to manage hiring, applications, and applicant review with clarity.
+              </p>
+            </div>
             <div className="hero-stats">
               <div>
                 <ShieldCheck size={20} />
-                <strong>JWT</strong>
-                <span>Protected sessions</span>
+                <strong>Secure login</strong>
+                <span>JWT protected sessions</span>
               </div>
               <div>
                 <Users size={20} />
-                <strong>2 Roles</strong>
-                <span>Seeker and employer</span>
+                <strong>Role-based access</strong>
+                <span>Seeker, employer, admin</span>
               </div>
               <div>
                 <CheckCircle2 size={20} />
-                <strong>Live</strong>
-                <span>Job workflows</span>
+                <strong>Job applications</strong>
+                <span>CV, cover letter, tracking</span>
               </div>
             </div>
             <div className="hero-actions" aria-label="Authentication shortcuts">
