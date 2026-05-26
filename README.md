@@ -37,8 +37,8 @@ The project is organized as a monorepo with two independent applications:
 Default local URLs:
 
 - Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:8000`
-- Swagger API docs: `http://localhost:8000/api/docs`
+- Backend API: `http://localhost:3000`
+- Swagger API docs: `http://localhost:3000/api/docs`
 
 ## Live Demo
 
@@ -172,7 +172,7 @@ Install these before running the project:
 Create `backend/.env` from `backend/.env.example`.
 
 ```env
-PORT=8000
+PORT=3000
 FRONTEND_URL=http://localhost:5173
 
 DB_HOST=localhost
@@ -193,14 +193,14 @@ MAIL_FROM="Job Portal <no-reply@example.com>"
 
 Important notes:
 
-- The frontend uses `VITE_API_URL` when configured and falls back to `http://localhost:8000`.
-- Backend CORS allows `http://localhost:5173`, `http://127.0.0.1:5173`, and any comma-separated origins configured in `FRONTEND_URL`.
+- The frontend uses `VITE_API_URL` when configured and falls back to `http://localhost:3000`.
+- Backend CORS allows `http://localhost:5173`, `http://127.0.0.1:5173`, `https://job-portal-system-neon.vercel.app`, and any comma-separated origins configured in `FRONTEND_URL`.
 - TypeORM `synchronize` is enabled for local development. For production, use migrations instead.
 
 Create `frontend/.env` from `frontend/.env.example` when the backend URL is different from the default.
 
 ```env
-VITE_API_URL=http://localhost:8000
+VITE_API_URL=http://localhost:3000
 ```
 
 ## Local Setup
@@ -247,7 +247,7 @@ npm run start:dev
 Backend runs at:
 
 ```text
-http://localhost:8000
+http://localhost:3000
 ```
 
 ### 6. Install frontend dependencies
@@ -263,7 +263,7 @@ npm install
 cp .env.example .env
 ```
 
-Keep `VITE_API_URL=http://localhost:8000` for the default local backend.
+Keep `VITE_API_URL=http://localhost:3000` for the default local backend.
 
 ### 8. Start frontend
 
@@ -402,13 +402,13 @@ Backend modules:
 Base URL:
 
 ```text
-http://localhost:8000
+http://localhost:3000
 ```
 
 Swagger:
 
 ```text
-http://localhost:8000/api/docs
+http://localhost:3000/api/docs
 ```
 
 Authenticated requests require:
@@ -725,6 +725,25 @@ Deployment guidance is available in:
 docs/deployment.md
 ```
 
+Production environment variables:
+
+```env
+# Vercel frontend
+VITE_API_URL=https://YOUR_BACKEND_URL
+
+# Render backend
+PORT=3000
+FRONTEND_URL=https://job-portal-system-neon.vercel.app
+```
+
+Recommended Render backend settings:
+
+```text
+Root Directory: backend
+Build Command: npm install && npm run build
+Start Command: npm run start:prod
+```
+
 Additional final submission documents:
 
 ```text
@@ -773,10 +792,10 @@ Check:
 
 Check:
 
-- Backend is running on `http://localhost:8000`
+- Backend is running on `http://localhost:3000`
 - Frontend is running on `http://localhost:5173`
 - CORS origin matches the frontend URL
-- `API_URL` in `frontend/src/main.jsx` is correct
+- `VITE_API_URL` is configured in Vercel and `frontend/src/apiConfig.js` is correct
 
 ### Login works but protected actions fail
 
@@ -793,7 +812,7 @@ Check:
 
 - File exists under `backend/uploads`
 - Backend static asset serving is enabled
-- URL starts with `http://localhost:8000/uploads/...`
+- URL starts with `http://localhost:3000/uploads/...`
 
 ## Version Control Notes
 

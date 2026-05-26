@@ -17,6 +17,7 @@ async function bootstrap() {
   const allowedOrigins = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'https://job-portal-system-neon.vercel.app',
     ...(process.env.FRONTEND_URL || '')
       .split(',')
       .map((origin) => origin.trim())
@@ -68,6 +69,6 @@ async function bootstrap() {
     swaggerDocument,
   );
 
-  await app.listen(process.env.PORT || 8000);
+  await app.listen(process.env.PORT || 3000);
 }
 bootstrap();

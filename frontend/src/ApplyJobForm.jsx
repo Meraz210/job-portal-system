@@ -1,5 +1,6 @@
 import React from 'react';
 import { Send } from 'lucide-react';
+import { API_BASE_URL } from './apiConfig.js';
 
 const MAX_CV_SIZE_BYTES = 5 * 1024 * 1024;
 const ACCEPTED_CV_TYPES = new Set([
@@ -52,7 +53,7 @@ function validateCv(file) {
 }
 
 export default function ApplyJobForm({
-  apiUrl = 'http://localhost:8000',
+  apiUrl = API_BASE_URL,
   job,
   token,
   isSubmitting = false,

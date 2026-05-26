@@ -13,7 +13,7 @@ This project can be deployed with separate frontend, backend, and PostgreSQL ser
 Set this environment variable in the frontend host:
 
 ```env
-VITE_API_URL=https://your-backend-api.example.com
+VITE_API_URL=https://YOUR_BACKEND_URL
 ```
 
 Build command:
@@ -33,8 +33,8 @@ dist
 Set these environment variables in the backend host:
 
 ```env
-PORT=8000
-FRONTEND_URL=https://your-frontend-url.example.com
+PORT=3000
+FRONTEND_URL=https://job-portal-system-neon.vercel.app
 DB_HOST=your-db-host
 DB_PORT=5432
 DB_USERNAME=your-db-user
@@ -79,6 +79,25 @@ GET /api/docs
 - Seed or create the admin user after the backend is connected to the production database.
 - Set a strong `JWT_SECRET`; never use the example secret in production.
 - Configure `VITE_API_URL` to the deployed backend URL before building the frontend.
+
+## Vercel Frontend Settings
+
+```text
+Root Directory: frontend
+Build Command: npm run build
+Output Directory: dist
+Environment Variable: VITE_API_URL=https://YOUR_BACKEND_URL
+```
+
+## Render Backend Settings
+
+```text
+Root Directory: backend
+Build Command: npm install && npm run build
+Start Command: npm run start:prod
+Environment Variable: FRONTEND_URL=https://job-portal-system-neon.vercel.app
+Environment Variable: PORT=3000
+```
 
 ## README Live Demo Links
 

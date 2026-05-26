@@ -40,8 +40,9 @@ import digitalMarketingImage from './assets/images/digital-marketing.png';
 import frontendDeveloperImage from './assets/images/frontend-developer.png';
 import qaImage from './assets/images/qa.png';
 import reactDeveloperImage from './assets/images/react-developer.png';
+import { API_BASE_URL } from './apiConfig.js';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = API_BASE_URL;
 const APPLICATION_STATUSES = ['pending', 'accepted', 'rejected'];
 const emptyJobForm = {
   title: '',
