@@ -6,19 +6,23 @@
 
 :root {
   color-scheme: light;
-  --bg: #f3f6f8;
+  --bg: #eef4f6;
   --surface: #ffffff;
-  --surface-muted: #f8fafb;
-  --border: #dce4ea;
-  --border-strong: #c9d4dc;
-  --text: #17212b;
-  --muted: #637381;
+  --surface-muted: #f7fafb;
+  --border: #d8e3e8;
+  --border-strong: #c4d2da;
+  --text: #13212b;
+  --muted: #647483;
   --primary: #0f766e;
   --primary-dark: #115e59;
   --primary-soft: #e4f4f1;
   --danger: #b42318;
   --danger-dark: #912018;
-  --shadow: 0 16px 38px rgba(18, 38, 54, 0.08);
+  --accent: #2563eb;
+  --accent-soft: #eaf1ff;
+  --ring: rgba(15, 118, 110, 0.18);
+  --shadow: 0 18px 48px rgba(18, 38, 54, 0.09);
+  --shadow-soft: 0 12px 32px rgba(18, 38, 54, 0.06);
 }
 
 body {
@@ -30,7 +34,9 @@ body {
     sans-serif;
   color: var(--text);
   background:
-    linear-gradient(180deg, #eef6fb 0, var(--bg) 320px),
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.11), transparent 34rem),
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.1), transparent 30rem),
+    linear-gradient(180deg, #f7fbfc 0, var(--bg) 380px),
     var(--bg);
   line-height: 1.5;
 }
@@ -2464,6 +2470,284 @@ button:disabled {
 .dashboard-job-form button,
 .job-card button {
   width: 100%;
+}
+
+/* Modern visual refresh */
+.landing-layout,
+.auth-panel,
+.session-panel,
+.jobs-layout,
+.applications-section,
+.employer-dashboard,
+.admin-dashboard,
+.dashboard-panel,
+.create-job-panel,
+.applicants-panel,
+.overview-card,
+.session-chip-panel,
+.profile-card,
+.dashboard-hero {
+  border-color: rgba(196, 210, 218, 0.82);
+  border-radius: 18px;
+}
+
+.landing-layout {
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 28px;
+  box-shadow: 0 32px 90px rgba(15, 23, 42, 0.16);
+}
+
+.landing-hero {
+  isolation: isolate;
+  padding: clamp(28px, 4vw, 52px);
+  background:
+    linear-gradient(135deg, rgba(3, 78, 74, 0.94), rgba(13, 98, 123, 0.82)),
+    url("https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1400&q=82");
+}
+
+.landing-hero::after,
+.dashboard-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255, 255, 255, 0.24), transparent 22rem),
+    radial-gradient(circle at 84% 12%, rgba(167, 243, 208, 0.2), transparent 18rem);
+}
+
+.landing-hero h1,
+.dashboard-hero h2 {
+  letter-spacing: 0;
+}
+
+.landing-hero h1 {
+  font-weight: 750;
+}
+
+.landing-hero p,
+.dashboard-hero p {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.hero-stats div,
+.landing-illustration-card {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 18px 46px rgba(2, 6, 23, 0.2);
+}
+
+.login-only-panel {
+  background:
+    radial-gradient(circle at top right, rgba(15, 118, 110, 0.08), transparent 16rem),
+    #ffffff;
+}
+
+.auth-tabs {
+  padding: 5px;
+  border: 1px solid #e0e8ed;
+  border-radius: 14px;
+  background: #f4f8fa;
+}
+
+.auth-tabs button {
+  border-radius: 10px;
+}
+
+.auth-tabs button.active {
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(18, 38, 54, 0.09);
+}
+
+.app-shell {
+  background:
+    radial-gradient(circle at 22% 0%, rgba(15, 118, 110, 0.12), transparent 28rem),
+    radial-gradient(circle at 90% 8%, rgba(37, 99, 235, 0.1), transparent 26rem),
+    linear-gradient(180deg, #f8fbfc 0, var(--bg) 480px);
+}
+
+.app-sidebar {
+  border-right-color: rgba(216, 227, 232, 0.88);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 10px 0 38px rgba(15, 23, 42, 0.05);
+}
+
+.sidebar-nav a {
+  border: 1px solid transparent;
+  border-radius: 14px;
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav a.active {
+  border-color: rgba(15, 118, 110, 0.12);
+  background:
+    linear-gradient(135deg, rgba(228, 244, 241, 0.98), rgba(234, 241, 255, 0.78));
+  box-shadow: 0 12px 26px rgba(18, 38, 54, 0.06);
+}
+
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 14px 0;
+  background: rgba(238, 244, 246, 0.72);
+  backdrop-filter: blur(16px);
+}
+
+.profile-card {
+  border-color: rgba(216, 227, 232, 0.9);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--shadow-soft);
+}
+
+.dashboard-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 0;
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(10, 92, 86, 0.94), rgba(26, 86, 153, 0.82)),
+    url("https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1400&q=82");
+  box-shadow: 0 26px 70px rgba(12, 75, 81, 0.18);
+}
+
+.dashboard-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.portal-summary div,
+.jobs-summary-card,
+.session-chip {
+  border-color: rgba(216, 227, 232, 0.85);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+}
+
+.hero-summary div {
+  border-color: rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 16px 34px rgba(2, 6, 23, 0.16);
+}
+
+.jobs-layout,
+.applications-section,
+.employer-dashboard,
+.admin-dashboard {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 252, 0.96)),
+    #ffffff;
+}
+
+.dashboard-panel,
+.create-job-panel,
+.applicants-panel {
+  background: rgba(248, 251, 252, 0.92);
+}
+
+.job-filter-panel,
+.dashboard-job-form,
+.apply-form-card {
+  border-color: rgba(216, 227, 232, 0.92);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f8fbfc 100%);
+  box-shadow: var(--shadow-soft);
+}
+
+.job-card,
+.application-card,
+.posted-job-card,
+.admin-users-row,
+.admin-row {
+  border-color: rgba(216, 227, 232, 0.95);
+  border-radius: 20px;
+  box-shadow: 0 14px 36px rgba(18, 38, 54, 0.07);
+}
+
+.job-card:hover,
+.application-card:hover,
+.posted-job-card:hover,
+.admin-users-row:hover,
+.admin-row:hover {
+  border-color: rgba(15, 118, 110, 0.24);
+  box-shadow: 0 24px 52px rgba(18, 38, 54, 0.12);
+  transform: translateY(-3px);
+}
+
+.job-card-image {
+  border-bottom-color: rgba(216, 227, 232, 0.9);
+}
+
+.company-logo,
+.brand-mark,
+.summary-icon,
+.session-chip-icon,
+.profile-avatar {
+  box-shadow: 0 12px 28px rgba(15, 118, 110, 0.16);
+}
+
+button,
+.hero-cta,
+.apply-button,
+.secondary-button,
+.danger-button,
+.avatar-upload-button,
+.avatar-remove-button,
+.logout-button {
+  border-radius: 12px;
+}
+
+button:not(.secondary-button):not(.danger-button):not(.icon-button) {
+  background: linear-gradient(135deg, var(--primary), #0b8f77);
+  box-shadow: 0 12px 26px rgba(15, 118, 110, 0.18);
+}
+
+button:hover:not(:disabled) {
+  box-shadow: 0 16px 34px rgba(15, 118, 110, 0.2);
+}
+
+.auth-tabs button {
+  color: var(--muted);
+  background: transparent !important;
+  box-shadow: none;
+}
+
+.auth-tabs button.active {
+  color: var(--primary-dark);
+  background: #ffffff !important;
+  box-shadow: 0 10px 26px rgba(18, 38, 54, 0.09);
+}
+
+.hero-actions button {
+  background: #ffffff !important;
+  box-shadow: 0 14px 30px rgba(2, 6, 23, 0.14);
+}
+
+.hero-actions .hero-secondary-button {
+  background: rgba(255, 255, 255, 0.13) !important;
+}
+
+input,
+select,
+textarea {
+  border-radius: 12px;
+  background: #fbfdfe;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline-color: var(--ring);
+  background: #ffffff;
+}
+
+.admin-table-head,
+.admin-users-table-head {
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f2f7f8 0%, #eaf2f4 100%);
 }
 
 @media (max-width: 980px) {
