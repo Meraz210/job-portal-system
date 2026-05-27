@@ -13,6 +13,12 @@ export class User {
   @Column()
   password: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  passwordResetTokenHash: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  passwordResetExpiresAt: Date | null;
+
   @Column()
   fullName: string;
 

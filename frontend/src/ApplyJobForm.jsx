@@ -56,6 +56,7 @@ export default function ApplyJobForm({
   apiUrl = API_BASE_URL,
   job,
   token,
+  seekerProfile = {},
   isSubmitting = false,
   onCancel,
   onSuccess = async () => {},
@@ -71,9 +72,13 @@ export default function ApplyJobForm({
   });
   const [errors, setErrors] = React.useState({});
   const [successMessage, setSuccessMessage] = React.useState('');
+  const [aiStatus, setAiStatus] = React.useState('');
   const [isLocalSubmitting, setIsLocalSubmitting] = React.useState(false);
+  const [isGeneratingCoverLetter, setIsGeneratingCoverLetter] =
+    React.useState(false);
   const [fileInputKey, setFileInputKey] = React.useState(0);
-  const isBusy = isSubmitting || isLocalSubmitting;
+  const isBusy =
+    isSubmitting || isLocalSubmitting || isGeneratingCoverLetter;
 
   function updateForm(field, value) {
     setForm((currentForm) => ({
@@ -86,6 +91,62 @@ export default function ApplyJobForm({
       form: '',
     }));
     setSuccessMessage('');
+    setAiStatus('');
+  }
+
+  async function generateCoverLetter() {
+    const accessToken = token || localStorage.getItem('access_token');
+
+    if (!accessToken) {
+      setErrors({
+        form: 'Please login before generating a cover letter.',
+      });
+      return;
+    }
+
+    setIsGeneratingCoverLetter(true);
+    setAiStatus('Generating cover letter...');
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      form: '',
+    }));
+
+    try {
+      const response = await fetch(`${apiUrl}/ai/cover-letter`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          job,
+          seekerProfile,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (response.status === 401) {
+        onUnauthorized();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not generate cover letter.');
+      }
+
+      updateForm('coverLetter', data.coverLetter || '');
+      setAiStatus(data.message || 'Cover letter generated. You can edit it.');
+    } catch (error) {
+      setAiStatus('');
+      setErrors({
+        form:
+          error instanceof Error
+            ? error.message
+            : 'Could not generate cover letter.',
+      });
+    } finally {
+      setIsGeneratingCoverLetter(false);
+    }
   }
 
   function validateForm() {
@@ -198,6 +259,7 @@ export default function ApplyJobForm({
   return (
     <form className="apply-form apply-form-card" onSubmit={handleSubmit} noValidate>
       {successMessage && <p className="form-success">{successMessage}</p>}
+      {aiStatus && <p className="form-success">{aiStatus}</p>}
       {errors.form && <p className="form-error">{errors.form}</p>}
 
       <label>
@@ -215,7 +277,19 @@ export default function ApplyJobForm({
       </label>
 
       <label>
-        Cover Letter
+        <span className="cover-letter-label-row">
+          Cover Letter
+          <button
+            className="secondary-button ai-generate-button"
+            type="button"
+            onClick={generateCoverLetter}
+            disabled={isBusy}
+          >
+            {isGeneratingCoverLetter
+              ? 'Generating...'
+              : 'Generate Cover Letter'}
+          </button>
+        </span>
         <textarea
           value={form.coverLetter}
           aria-invalid={Boolean(errors.coverLetter)}

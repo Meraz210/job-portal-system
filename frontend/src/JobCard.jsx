@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, DollarSign, MapPin, Send } from 'lucide-react';
+import { CheckCircle2, DollarSign, MapPin, Send, Star } from 'lucide-react';
 
 export default function JobCard({
   job,
@@ -10,6 +10,9 @@ export default function JobCard({
   getCompanyInitials,
   getJobImage,
   formatSalary,
+  rating = 0,
+  aiMatch,
+  onRate,
   onApply,
 }) {
   const jobStatusLabel =
@@ -96,6 +99,48 @@ export default function JobCard({
       )}
 
       <p className="job-description">{job.description}</p>
+
+      {role === 'seeker' && (
+        <div className="ai-match-card">
+          <div>
+            <span>AI Match Score</span>
+            <strong>
+              {aiMatch?.score !== null && aiMatch?.score !== undefined
+                ? `${aiMatch.score}%`
+                : aiMatch?.label || 'Analyzing'}
+            </strong>
+          </div>
+          <p>
+            {aiMatch?.message ||
+              'Complete your profile for better AI matching.'}
+          </p>
+          {aiMatch?.factors?.length > 0 && (
+            <ul>
+              {aiMatch.factors.slice(0, 2).map((factor) => (
+                <li key={factor}>{factor}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      <div className="job-rating" aria-label={`Rate ${job.title}`}>
+        <span>Rating</span>
+        <div className="job-rating-stars">
+          {[1, 2, 3, 4, 5].map((value) => (
+            <button
+              className={value <= rating ? 'active' : ''}
+              type="button"
+              key={value}
+              onClick={() => onRate?.(job.id, value)}
+              aria-label={`Rate ${job.title} ${value} out of 5`}
+            >
+              <Star size={17} fill={value <= rating ? 'currentColor' : 'none'} />
+            </button>
+          ))}
+        </div>
+        <strong>{rating ? `${rating}/5` : 'Not rated'}</strong>
+      </div>
 
       {role === 'seeker' && (
         <div className="apply-action">

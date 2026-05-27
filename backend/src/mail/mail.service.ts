@@ -103,4 +103,27 @@ export class MailService {
       html: `<p>Hello ${params.seekerName},</p><p>Your application for <strong>${params.jobTitle}</strong> is now <strong>${params.status}</strong>.</p>`,
     });
   }
+
+  async sendPasswordResetEmail(params: {
+    email: string;
+    name: string;
+    resetUrl: string;
+    token: string;
+  }) {
+    await this.sendMail({
+      to: params.email,
+      subject: 'Reset your Job Portal password',
+      text: [
+        `Hello ${params.name},`,
+        '',
+        'Use the link below to reset your Job Portal password. This link expires in 30 minutes.',
+        params.resetUrl,
+        '',
+        `Reset token: ${params.token}`,
+        '',
+        'If you did not request this, you can ignore this email.',
+      ].join('\n'),
+      html: `<p>Hello ${params.name},</p><p>Use the link below to reset your Job Portal password. This link expires in 30 minutes.</p><p><a href="${params.resetUrl}">Reset password</a></p><p><strong>Reset token:</strong> ${params.token}</p><p>If you did not request this, you can ignore this email.</p>`,
+    });
+  }
 }

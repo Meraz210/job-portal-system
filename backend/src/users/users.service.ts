@@ -22,4 +22,14 @@ export class UsersService {
       where: { email },
     });
   }
+
+  async findByPasswordResetTokenHash(passwordResetTokenHash: string) {
+    return this.userRepository.findOne({
+      where: { passwordResetTokenHash },
+    });
+  }
+
+  async save(user: User) {
+    return this.userRepository.save(user);
+  }
 }

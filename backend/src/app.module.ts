@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { JobsModule } from './jobs/jobs.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { AdminModule } from './admin/admin.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -33,6 +34,8 @@ import { AdminModule } from './admin/admin.module';
     ApplicationsModule,
 
     AdminModule,
+
+    AiModule,
   ],
 })
 export class AppModule {}

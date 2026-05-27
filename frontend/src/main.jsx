@@ -43,6 +43,8 @@ import reactDeveloperImage from './assets/images/react-developer.png';
 import { API_BASE_URL } from './apiConfig.js';
 
 const API_URL = API_BASE_URL;
+const SUPPORT_EMAIL = 'support@jobportal.local';
+const JOB_RATINGS_STORAGE_KEY = 'job_ratings';
 const APPLICATION_STATUSES = ['pending', 'accepted', 'rejected'];
 const emptyJobForm = {
   title: '',
@@ -255,7 +257,14 @@ function App() {
   const [password, setPassword] = React.useState('123456');
   const [fullName, setFullName] = React.useState('');
   const [signupRole, setSignupRole] = React.useState('seeker');
-  const [authMode, setAuthMode] = React.useState('login');
+  const [authMode, setAuthMode] = React.useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('resetToken') ? 'reset' : 'login';
+  });
+  const [resetToken, setResetToken] = React.useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('resetToken') || '';
+  });
   const [formErrors, setFormErrors] = React.useState({});
   const [token, setToken] = React.useState(() =>
     localStorage.getItem('access_token'),
@@ -293,6 +302,20 @@ function App() {
   const [isApplicantsLoading, setIsApplicantsLoading] = React.useState(false);
   const [editingJobId, setEditingJobId] = React.useState(null);
   const [jobForm, setJobForm] = React.useState(emptyJobForm);
+  const [supportStatus, setSupportStatus] = React.useState('');
+  const [topbarPanel, setTopbarPanel] = React.useState(null);
+  const [aiJobMatches, setAiJobMatches] = React.useState({});
+  const [aiMatchStatus, setAiMatchStatus] = React.useState('');
+  const [aiRecommendedJobs, setAiRecommendedJobs] = React.useState([]);
+  const [aiApplicationSummaries, setAiApplicationSummaries] = React.useState({});
+  const [aiSummaryStatus, setAiSummaryStatus] = React.useState('');
+  const [jobRatings, setJobRatings] = React.useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(JOB_RATINGS_STORAGE_KEY)) || {};
+    } catch {
+      return {};
+    }
+  });
 
   const user = token ? decodeJwt(token) : null;
   const role = user?.role;
@@ -305,6 +328,42 @@ function App() {
       .filter(([jobId]) => Boolean(jobId)),
   );
   const appliedJobIds = new Set(applicationStatusByJobId.keys());
+  const pendingApplicationsCount = applications.filter(
+    (application) => getApplicationStatus(application) === 'pending',
+  ).length;
+  const unreadApplicantCount = selectedApplicants?.applicants?.length || 0;
+  const notificationItems =
+    role === 'seeker'
+      ? [
+          `${jobs.length} jobs are available right now.`,
+          `${applications.length} applications submitted from your account.`,
+          pendingApplicationsCount
+            ? `${pendingApplicationsCount} applications are still pending.`
+            : 'No pending applications at the moment.',
+        ]
+      : role === 'employer'
+        ? [
+            `${employerJobs.length} jobs posted by your company.`,
+            `${unreadApplicantCount} applicant records are ready for review.`,
+            employerStatus || 'Employer workspace is up to date.',
+          ]
+        : [
+            `${adminUsers.length} users registered on the platform.`,
+            `${adminJobs.length} jobs are currently tracked.`,
+            `${adminApplications.length} applications are in the system.`,
+          ];
+  const messageItems = [
+    {
+      title: 'Support team',
+      description: 'Send account, job posting, or technical questions.',
+      href: `mailto:${SUPPORT_EMAIL}`,
+    },
+    {
+      title: 'Help center',
+      description: 'Read quick answers for common platform tasks.',
+      href: '#help-center',
+    },
+  ];
 
   React.useEffect(() => {
     if (!token) {
@@ -365,6 +424,31 @@ function App() {
     setAdminApplications([]);
     setAdminStatus('');
   }, [token, role]);
+
+  React.useEffect(() => {
+    if (token && role === 'seeker' && jobs.length > 0) {
+      loadAiJobMatches();
+      return;
+    }
+
+    setAiJobMatches({});
+    setAiRecommendedJobs([]);
+    setAiMatchStatus('');
+  }, [token, role, jobs, applications]);
+
+  React.useEffect(() => {
+    if (
+      token &&
+      role === 'employer' &&
+      selectedApplicants?.applicants?.length
+    ) {
+      loadAiApplicationSummaries(selectedApplicants.applicants);
+      return;
+    }
+
+    setAiApplicationSummaries({});
+    setAiSummaryStatus('');
+  }, [token, role, selectedApplicants]);
 
   React.useEffect(() => {
     if (!token || !role) {
@@ -447,6 +531,184 @@ function App() {
       search: '',
       location: '',
       company: '',
+    });
+  }
+
+  function getSeekerProfile() {
+    const appliedJobSkills = applications
+      .map((application) => application.job?.skills)
+      .filter(Boolean)
+      .join(', ');
+    const coverLetterText = applications
+      .map((application) => application.coverLetter)
+      .filter(Boolean)
+      .join(' ');
+
+    return {
+      fullName: user?.fullName || user?.email?.split('@')[0] || '',
+      email: user?.email || email,
+      skills: appliedJobSkills,
+      experience: '',
+      location: '',
+      profileText: coverLetterText,
+    };
+  }
+
+  async function loadAiJobMatches() {
+    const accessToken = token || localStorage.getItem('access_token');
+
+    if (!accessToken) {
+      return;
+    }
+
+    setAiMatchStatus('Generating AI match scores...');
+
+    try {
+      const seekerProfile = getSeekerProfile();
+      const [matches, recommendationsResponse] = await Promise.all([
+        Promise.all(
+          jobs.map(async (job) => {
+            const response = await fetch(`${API_URL}/ai/job-match`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                job,
+                seekerProfile,
+                cvText: seekerProfile.profileText,
+              }),
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+              throw new Error(data.message || 'Could not generate match score.');
+            }
+
+            return [job.id, data];
+          }),
+        ),
+        fetch(`${API_URL}/ai/job-recommendations`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            jobs,
+            seekerProfile,
+            cvText: seekerProfile.profileText,
+          }),
+        }),
+      ]);
+      const recommendationsData = await recommendationsResponse
+        .json()
+        .catch(() => ({}));
+
+      if (!recommendationsResponse.ok) {
+        throw new Error(
+          recommendationsData.message ||
+            'Could not generate job recommendations.',
+        );
+      }
+
+      setAiJobMatches(Object.fromEntries(matches));
+      setAiRecommendedJobs(recommendationsData.recommendations || []);
+      setAiMatchStatus('');
+    } catch (error) {
+      setAiMatchStatus(
+        error instanceof Error
+          ? error.message
+          : 'Could not generate match scores.',
+      );
+    }
+  }
+
+  async function loadAiApplicationSummaries(applicantApplications) {
+    const accessToken = token || localStorage.getItem('access_token');
+
+    if (!accessToken) {
+      return;
+    }
+
+    setAiSummaryStatus('Generating AI applicant summaries...');
+
+    try {
+      const summaries = await Promise.all(
+        applicantApplications.map(async (application) => {
+          const response = await fetch(`${API_URL}/ai/application-summary`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              application,
+              job: application.job || selectedEmployerJob || {},
+            }),
+          });
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            throw new Error(data.message || 'Could not generate AI summary.');
+          }
+
+          return [application.id, data];
+        }),
+      );
+
+      setAiApplicationSummaries(Object.fromEntries(summaries));
+      setAiSummaryStatus('');
+    } catch (error) {
+      setAiSummaryStatus(
+        error instanceof Error
+          ? error.message
+          : 'Could not generate AI summaries.',
+      );
+    }
+  }
+
+  function handleContactSupport(event) {
+    event.preventDefault();
+
+    const subject = encodeURIComponent('Job Portal support request');
+    const body = encodeURIComponent(
+      [
+        'Hello Support Team,',
+        '',
+        'I need help with:',
+        '',
+        `Account email: ${email || 'Not provided'}`,
+        `Role: ${role || signupRole || 'Not logged in'}`,
+      ].join('\n'),
+    );
+
+    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+    setSupportStatus(
+      `Opening your email app. If it does not open, email ${SUPPORT_EMAIL}.`,
+    );
+  }
+
+  function toggleTopbarPanel(panelName) {
+    setTopbarPanel((currentPanel) =>
+      currentPanel === panelName ? null : panelName,
+    );
+  }
+
+  function handleRateJob(jobId, rating) {
+    setJobRatings((currentRatings) => {
+      const nextRatings = {
+        ...currentRatings,
+        [jobId]: rating,
+      };
+
+      localStorage.setItem(
+        JOB_RATINGS_STORAGE_KEY,
+        JSON.stringify(nextRatings),
+      );
+
+      return nextRatings;
     });
   }
 
@@ -756,6 +1018,91 @@ function App() {
     }
   }
 
+  async function handleForgotPassword(event) {
+    event.preventDefault();
+    const validationErrors = validateAuthForm('forgot');
+
+    if (Object.keys(validationErrors).length) {
+      setFormErrors(validationErrors);
+      setStatus('Please enter a valid email address.');
+      return;
+    }
+
+    setIsLoading(true);
+    setStatus('');
+
+    try {
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not send reset instructions.');
+      }
+
+      setStatus(
+        data.message ||
+          'If an account exists for this email, password reset instructions have been sent.',
+      );
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleResetPassword(event) {
+    event.preventDefault();
+    const validationErrors = validateAuthForm('reset');
+
+    if (Object.keys(validationErrors).length) {
+      setFormErrors(validationErrors);
+      setStatus('Please fix the highlighted fields.');
+      return;
+    }
+
+    setIsLoading(true);
+    setStatus('');
+
+    try {
+      const response = await fetch(`${API_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: resetToken.trim(),
+          password,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Could not reset password.');
+      }
+
+      setPassword('');
+      setResetToken('');
+      setFormErrors({});
+      setAuthMode('login');
+      window.history.replaceState({}, '', window.location.pathname);
+      setStatus(
+        data.message || 'Password reset successful. Please login again.',
+      );
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   function validateAuthForm(mode = authMode) {
     const errors = {};
     const trimmedEmail = email.trim();
@@ -764,15 +1111,22 @@ function App() {
       errors.fullName = 'Full name required';
     }
 
-    if (!trimmedEmail) {
+    if (mode !== 'reset' && !trimmedEmail) {
       errors.email = 'Email required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+    } else if (
+      mode !== 'reset' &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)
+    ) {
       errors.email = 'Invalid email';
     }
 
-    if (!password) {
+    if (mode === 'reset' && !resetToken.trim()) {
+      errors.resetToken = 'Reset token required';
+    }
+
+    if (mode !== 'forgot' && !password) {
       errors.password = 'Password required';
-    } else if (password.length < 6) {
+    } else if (mode !== 'forgot' && password.length < 6) {
       errors.password = 'Password must be at least 6 characters';
     }
 
@@ -783,6 +1137,10 @@ function App() {
     setAuthMode(nextMode);
     setFormErrors({});
     setStatus('');
+    if (nextMode !== 'reset' && resetToken) {
+      setResetToken('');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }
 
   async function handleCreateJob(event) {
@@ -1214,6 +1572,45 @@ function App() {
     { name: 'vacancy', label: 'Vacancy', icon: Users },
     { name: 'workplaceType', label: 'Workplace Type', icon: Building2 },
   ];
+  const authHeading =
+    authMode === 'signup'
+      ? 'Create Account'
+      : authMode === 'forgot'
+        ? 'Reset Password'
+        : authMode === 'reset'
+          ? 'Set New Password'
+          : 'Welcome Back';
+  const authDescription =
+    authMode === 'signup'
+      ? 'Sign up as a seeker or employer.'
+      : authMode === 'forgot'
+        ? 'Enter your email to receive reset instructions.'
+        : authMode === 'reset'
+          ? 'Enter your reset token and new password.'
+          : 'Login to access your dashboard.';
+  const authSubmitHandler =
+    authMode === 'forgot'
+      ? handleForgotPassword
+      : authMode === 'reset'
+        ? handleResetPassword
+        : authMode === 'login'
+          ? handleLogin
+          : handleSignup;
+  const authSubmitText = isLoading
+    ? authMode === 'login'
+      ? 'Signing in...'
+      : authMode === 'signup'
+        ? 'Creating account...'
+        : authMode === 'forgot'
+          ? 'Sending reset link...'
+          : 'Resetting password...'
+    : authMode === 'login'
+      ? 'Login'
+      : authMode === 'signup'
+        ? 'Create Account'
+        : authMode === 'forgot'
+          ? 'Send Reset Link'
+          : 'Reset Password';
 
   if (!token || !user) {
     return (
@@ -1283,18 +1680,14 @@ function App() {
             </div>
           </div>
 
-          <div className="auth-panel login-only-panel">
+          <div className={`auth-panel login-only-panel auth-${authMode}`}>
             <div className="brand-row">
               <div className="brand-mark compact-mark">
                 <LogIn size={22} />
               </div>
               <div>
-                <h2>{authMode === 'login' ? 'Welcome Back' : 'Create Account'}</h2>
-                <p>
-                  {authMode === 'login'
-                    ? 'Login to access your dashboard.'
-                    : 'Sign up as a seeker or employer.'}
-                </p>
+                <h2>{authHeading}</h2>
+                <p>{authDescription}</p>
               </div>
             </div>
 
@@ -1317,9 +1710,20 @@ function App() {
               </button>
             </div>
 
+            {(authMode === 'forgot' || authMode === 'reset') && (
+              <div className="auth-mode-note">
+                <LockKeyhole size={18} />
+                <p>
+                  {authMode === 'forgot'
+                    ? 'We will send a secure reset token if this email is registered.'
+                    : 'Use the reset token from your email or backend console preview.'}
+                </p>
+              </div>
+            )}
+
             <form
               className="login-form"
-              onSubmit={authMode === 'login' ? handleLogin : handleSignup}
+              onSubmit={authSubmitHandler}
             >
               {authMode === 'signup' && (
                 <>
@@ -1363,69 +1767,126 @@ function App() {
                   </label>
                 </>
               )}
-              <label>
-                Email
-                <span className="input-with-icon">
-                  <Mail size={20} />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(event) => {
-                      setEmail(event.target.value);
-                      setFormErrors((currentErrors) => ({
-                        ...currentErrors,
-                        email: '',
-                      }));
-                    }}
-                    placeholder="meraz@gmail.com"
-                    aria-invalid={Boolean(formErrors.email)}
-                    required
-                    disabled={isLoading}
-                  />
-                </span>
-                {formErrors.email && (
-                  <span className="field-error">{formErrors.email}</span>
-                )}
-              </label>
+              {authMode !== 'reset' && (
+                <label>
+                  Email
+                  <span className="input-with-icon">
+                    <Mail size={20} />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(event) => {
+                        setEmail(event.target.value);
+                        setFormErrors((currentErrors) => ({
+                          ...currentErrors,
+                          email: '',
+                        }));
+                      }}
+                      placeholder="meraz@gmail.com"
+                      aria-invalid={Boolean(formErrors.email)}
+                      required
+                      disabled={isLoading}
+                    />
+                  </span>
+                  {formErrors.email && (
+                    <span className="field-error">{formErrors.email}</span>
+                  )}
+                </label>
+              )}
 
-              <label>
-                Password
-                <span className="input-with-icon">
-                  <LockKeyhole size={20} />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(event) => {
-                      setPassword(event.target.value);
-                      setFormErrors((currentErrors) => ({
-                        ...currentErrors,
-                        password: '',
-                      }));
-                    }}
-                    placeholder="123456"
-                    aria-invalid={Boolean(formErrors.password)}
-                    required
+              {authMode === 'reset' && (
+                <label>
+                  Reset Token
+                  <span className="input-with-icon">
+                    <LockKeyhole size={20} />
+                    <input
+                      type="text"
+                      value={resetToken}
+                      onChange={(event) => {
+                        setResetToken(event.target.value);
+                        setFormErrors((currentErrors) => ({
+                          ...currentErrors,
+                          resetToken: '',
+                        }));
+                      }}
+                      placeholder="Paste reset token"
+                      aria-invalid={Boolean(formErrors.resetToken)}
+                      required
+                      disabled={isLoading}
+                    />
+                  </span>
+                  {formErrors.resetToken && (
+                    <span className="field-error">
+                      {formErrors.resetToken}
+                    </span>
+                  )}
+                </label>
+              )}
+
+              {authMode !== 'forgot' && (
+                <label>
+                  {authMode === 'reset' ? 'New Password' : 'Password'}
+                  <span className="input-with-icon">
+                    <LockKeyhole size={20} />
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(event) => {
+                        setPassword(event.target.value);
+                        setFormErrors((currentErrors) => ({
+                          ...currentErrors,
+                          password: '',
+                        }));
+                      }}
+                      placeholder={
+                        authMode === 'reset' ? 'New password' : '123456'
+                      }
+                      aria-invalid={Boolean(formErrors.password)}
+                      required
+                      disabled={isLoading}
+                    />
+                  </span>
+                  {formErrors.password && (
+                    <span className="field-error">{formErrors.password}</span>
+                  )}
+                </label>
+              )}
+
+              <div className="auth-form-links">
+                {authMode === 'login' && (
+                  <button
+                    className="forgot-link"
+                    type="button"
+                    onClick={() => handleAuthModeChange('forgot')}
                     disabled={isLoading}
-                  />
-                </span>
-                {formErrors.password && (
-                  <span className="field-error">{formErrors.password}</span>
+                  >
+                    Forgot password?
+                  </button>
                 )}
-              </label>
+
+                {(authMode === 'forgot' || authMode === 'reset') && (
+                  <button
+                    className="forgot-link"
+                    type="button"
+                    onClick={() => handleAuthModeChange('login')}
+                    disabled={isLoading}
+                  >
+                    Back to login
+                  </button>
+                )}
+              </div>
 
               <button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <span className="button-spinner" aria-hidden="true" />
+                ) : authMode === 'forgot' ? (
+                  <Mail size={18} />
+                ) : authMode === 'reset' ? (
+                  <LockKeyhole size={18} />
                 ) : (
                   <LogIn size={18} />
                 )}
-                {isLoading
-                  ? authMode === 'login'
-                    ? 'Signing in...'
-                    : 'Creating account...'
-                  : authMode === 'login'
-                    ? 'Login'
-                    : 'Create Account'}
+                {authSubmitText}
               </button>
             </form>
 
@@ -1495,7 +1956,7 @@ function App() {
             <strong>Need Help?</strong>
             <p>Visit our Help Center</p>
           </div>
-          <a href="#support">
+          <a href="#help-center">
             Go to Help Center
             <ExternalLink size={14} />
           </a>
@@ -1526,13 +1987,75 @@ function App() {
             <kbd>⌘ K</kbd>
           </div>
           <div className="topbar-actions">
-            <button className="topbar-icon-button" type="button" aria-label="Notifications">
-              <Bell size={20} />
-              <span>2</span>
-            </button>
-            <button className="topbar-icon-button" type="button" aria-label="Messages">
-              <MessageCircle size={20} />
-            </button>
+            <div className="topbar-popover-wrap">
+              <button
+                className="topbar-icon-button"
+                type="button"
+                aria-label="Notifications"
+                aria-expanded={topbarPanel === 'notifications'}
+                onClick={() => toggleTopbarPanel('notifications')}
+              >
+                <Bell size={20} />
+                <span>{notificationItems.length}</span>
+              </button>
+              {topbarPanel === 'notifications' && (
+                <div className="topbar-popover" role="status">
+                  <div className="topbar-popover-header">
+                    <strong>Notifications</strong>
+                    <button
+                      type="button"
+                      onClick={() => setTopbarPanel(null)}
+                      aria-label="Close notifications"
+                    >
+                      x
+                    </button>
+                  </div>
+                  <div className="topbar-popover-list">
+                    {notificationItems.map((item) => (
+                      <p key={item}>{item}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="topbar-popover-wrap">
+              <button
+                className="topbar-icon-button"
+                type="button"
+                aria-label="Messages"
+                aria-expanded={topbarPanel === 'messages'}
+                onClick={() => toggleTopbarPanel('messages')}
+              >
+                <MessageCircle size={20} />
+              </button>
+              {topbarPanel === 'messages' && (
+                <div className="topbar-popover" role="status">
+                  <div className="topbar-popover-header">
+                    <strong>Messages</strong>
+                    <button
+                      type="button"
+                      onClick={() => setTopbarPanel(null)}
+                      aria-label="Close messages"
+                    >
+                      x
+                    </button>
+                  </div>
+                  <div className="topbar-popover-list">
+                    {messageItems.map((item) => (
+                      <a
+                        className="topbar-message-item"
+                        href={item.href}
+                        key={item.title}
+                        onClick={() => setTopbarPanel(null)}
+                      >
+                        <strong>{item.title}</strong>
+                        <span>{item.description}</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <UserProfileHeader
               email={user.email}
               role={user.role}
@@ -2292,6 +2815,12 @@ function App() {
                 </p>
               )}
 
+              {aiSummaryStatus && (
+                <p className={getStatusClass(aiSummaryStatus)}>
+                  {aiSummaryStatus}
+                </p>
+              )}
+
               {!isApplicantsLoading &&
               !hasApplicantsError &&
               selectedApplicants.applicants.length > 0 ? (
@@ -2306,6 +2835,7 @@ function App() {
                   </div>
                   {selectedApplicants.applicants.map((application) => {
                     const cvUrl = getCvUrl(application);
+                    const aiSummary = aiApplicationSummaries[application.id];
 
                     return (
                       <div className="applicant-row" key={application.id}>
@@ -2344,6 +2874,24 @@ function App() {
                             </>
                           ) : (
                             <span>No CV</span>
+                          )}
+                        </div>
+                        <div className="ai-applicant-summary">
+                          <strong>AI Summary</strong>
+                          {aiSummary ? (
+                            <>
+                              <p>{aiSummary.summary}</p>
+                              <span>{aiSummary.fit}</span>
+                              {aiSummary.skills?.length > 0 && (
+                                <small>
+                                  Skills: {aiSummary.skills.join(', ')}
+                                </small>
+                              )}
+                            </>
+                          ) : (
+                            <p>
+                              AI summary will appear after local analysis.
+                            </p>
                           )}
                         </div>
                       </div>
@@ -2465,6 +3013,41 @@ function App() {
           <p className={getStatusClass(jobsStatus)}>{jobsStatus}</p>
         )}
 
+        {role === 'seeker' && aiMatchStatus && (
+          <p className={getStatusClass(aiMatchStatus)}>{aiMatchStatus}</p>
+        )}
+
+        {role === 'seeker' && aiRecommendedJobs.length > 0 && (
+          <section className="ai-recommendations-panel">
+            <div>
+              <p className="eyebrow">AI Recommendations</p>
+              <h3>Best jobs for your current profile</h3>
+            </div>
+            <div className="ai-recommendation-list">
+              {aiRecommendedJobs.map((recommendation) => (
+                <a
+                  href="#jobs"
+                  className="ai-recommendation-item"
+                  key={recommendation.jobId}
+                >
+                  <strong>{recommendation.title || 'Recommended job'}</strong>
+                  <span>
+                    {recommendation.company || 'Company'} ·{' '}
+                    {recommendation.location || 'Location not listed'}
+                  </span>
+                  <small>
+                    {recommendation.match?.score !== null &&
+                    recommendation.match?.score !== undefined
+                      ? `${recommendation.match.score}% match`
+                      : recommendation.match?.label ||
+                        'Complete your profile'}
+                  </small>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
         {applyModalJob && (
           <div className="modal-backdrop" role="presentation">
             <section
@@ -2493,6 +3076,7 @@ function App() {
               <ApplyJobForm
                 apiUrl={API_URL}
                 job={applyModalJob}
+                seekerProfile={getSeekerProfile()}
                 isSubmitting={Boolean(applyingJobId)}
                 onCancel={closeApplyModal}
                 onStatusChange={setJobsStatus}
@@ -2520,6 +3104,9 @@ function App() {
               getCompanyInitials={getCompanyInitials}
               getJobImage={getJobImage}
               formatSalary={formatSalary}
+              rating={jobRatings[job.id] || 0}
+              aiMatch={aiJobMatches[job.id]}
+              onRate={handleRateJob}
               onApply={openApplyModal}
             />
           ))}
@@ -2720,23 +3307,31 @@ function App() {
         <div className="support-header">
           <div>
             <p className="eyebrow">Support Center</p>
-            <h2>Need help? We’re here to support you.</h2>
+            <h2>Need help? We're here to support you.</h2>
             <p>
               Get help with your account, job posting, applications, and
               technical issues from one dedicated support area.
             </p>
           </div>
           <div className="support-actions">
-            <a className="support-primary-cta" href="mailto:support@jobportal.local">
+            <a
+              className="support-primary-cta"
+              href={`mailto:${SUPPORT_EMAIL}`}
+              onClick={handleContactSupport}
+            >
               <MessageCircle size={18} />
               Contact Support
             </a>
-            <a className="support-secondary-cta" href="#support">
+            <a className="support-secondary-cta" href="#help-center">
               <HelpCircle size={18} />
               Visit Help Center
             </a>
           </div>
         </div>
+
+        {supportStatus && (
+          <p className="support-contact-note">{supportStatus}</p>
+        )}
 
         <div className="support-card-grid">
           <article className="support-card">
@@ -2777,6 +3372,44 @@ function App() {
             <p>
               Report upload, dashboard, browser, or platform issues for faster
               troubleshooting.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className="help-center-section" id="help-center">
+        <div className="help-center-header">
+          <p className="eyebrow">Help Center</p>
+          <h2>Quick answers for common Job Portal tasks</h2>
+        </div>
+
+        <div className="help-center-grid">
+          <article className="help-center-item">
+            <h3>How do I apply for a job?</h3>
+            <p>
+              Open a job card, choose Apply Now, upload your CV, add optional
+              details, and submit the application.
+            </p>
+          </article>
+          <article className="help-center-item">
+            <h3>How do employers review applicants?</h3>
+            <p>
+              Employer accounts can open the Applicants area, review CVs, and
+              update each application to pending, accepted, or rejected.
+            </p>
+          </article>
+          <article className="help-center-item">
+            <h3>Why can I not access a page?</h3>
+            <p>
+              Some areas are role-based. Login with a seeker, employer, or
+              admin account that matches the workspace you want to use.
+            </p>
+          </article>
+          <article className="help-center-item">
+            <h3>What should I send support?</h3>
+            <p>
+              Include your account email, role, the page where the issue
+              happened, and the exact error message you saw.
             </p>
           </article>
         </div>

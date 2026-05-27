@@ -78,8 +78,11 @@ Backend:
 - Job cards with role-specific images and application status badges
 - Employer job create, update, delete, and posted-job view
 - Seeker application workflow with CV upload, cover letter, and portfolio URL
+- Local AI job recommendations and match scores for seeker job cards
+- Local AI cover letter generator inside the application form
 - Seeker application tracking
 - Employer applicant review
+- Local AI application summary for employer applicant review
 - Employer application status update: `pending`, `accepted`, `rejected`
 - Admin dashboard for users, jobs, and applications
 - Admin delete controls for users and jobs
@@ -130,6 +133,7 @@ job-portal-system/
 |   |-- src/
 |   |   |-- admin/
 |   |   |-- applications/
+|   |   |-- ai/
 |   |   |-- auth/
 |   |   |-- jobs/
 |   |   |-- mail/
@@ -189,12 +193,16 @@ MAIL_SECURE=false
 MAIL_USER=your-smtp-username
 MAIL_PASS=your-smtp-password
 MAIL_FROM="Job Portal <no-reply@example.com>"
+
+AI_PROVIDER=
+AI_API_KEY=
 ```
 
 Important notes:
 
 - The frontend uses `VITE_API_URL` when configured and falls back to `http://localhost:3000`.
 - Backend CORS allows `http://localhost:5173`, `http://127.0.0.1:5173`, `https://job-portal-system-neon.vercel.app`, and any comma-separated origins configured in `FRONTEND_URL`.
+- `AI_PROVIDER` and `AI_API_KEY` are optional placeholders for future external AI providers. When they are empty, the backend uses local rule-based fallback logic and does not call paid APIs.
 - TypeORM `synchronize` is enabled for local development. For production, use migrations instead.
 
 Create `frontend/.env` from `frontend/.env.example` when the backend URL is different from the default.
@@ -375,10 +383,28 @@ Major UI areas:
 - Sidebar dashboard shell
 - Active portal summary
 - Jobs page
+- AI match score cards on seeker jobs
 - Employer dashboard
 - Admin dashboard
 - Applications section
+- AI cover letter generation in the application modal
 - Applicants panel
+- AI applicant summaries for employers
+
+## AI Features
+
+The AI features work without external paid APIs. The backend exposes an `ai` module with local rule-based fallback logic and optional environment placeholders for future providers.
+
+- AI Job Recommendations and Match Score: seekers see a recommendation panel plus an AI match score on each job card. The local algorithm compares available seeker/application text with job title, description, skills, experience, location, and workplace type.
+- AI Cover Letter Generator: seekers can click `Generate Cover Letter` in the application form. The generated letter uses the seeker name/email when available plus the selected job title, company, description, and skills. The textarea remains editable before submission.
+- AI CV/Application Summary: employers see an AI Summary under each applicant row. The local logic extracts skills, cover letter highlights, keyword overlap, and a fit note.
+
+Local fallback behavior:
+
+- No `AI_API_KEY` is required.
+- `AI_PROVIDER` defaults to local behavior when empty.
+- If seeker profile/application text is limited, match scoring returns a helpful fallback message: `Complete your profile for better AI matching.`
+- CV file binary text extraction is not implemented yet; current fallback uses profile, application, cover-letter, and job text already available to the app.
 
 ## Backend Documentation
 
@@ -393,6 +419,7 @@ Backend modules:
 - `users`: User profile endpoints and user entity.
 - `jobs`: Job CRUD, search, filtering, employer ownership checks.
 - `applications`: CV upload, seeker applications, employer applicant review, status updates.
+- `ai`: Local AI fallback services for job matching, cover letters, and application summaries.
 - `admin`: Admin-only user/job/application management.
 - `mail`: SMTP mail service configuration.
 - `seeds`: Local admin seed script.
@@ -424,6 +451,8 @@ Authorization: Bearer <jwt_token>
 | `POST` | `/auth/register` | Public | Register a job seeker |
 | `POST` | `/auth/register/employer` | Public | Register an employer |
 | `POST` | `/auth/login` | Public | Login and receive JWT |
+| `POST` | `/auth/forgot-password` | Public | Request password reset instructions |
+| `POST` | `/auth/reset-password` | Public | Reset password with a valid reset token |
 
 Register body:
 
@@ -452,6 +481,23 @@ Login response:
 }
 ```
 
+Forgot password body:
+
+```json
+{
+  "email": "seeker@example.com"
+}
+```
+
+Reset password body:
+
+```json
+{
+  "token": "reset-token-from-email",
+  "password": "newPassword123"
+}
+```
+
 ### Users
 
 | Method | Endpoint | Access | Description |
@@ -459,6 +505,17 @@ Login response:
 | `GET` | `/users/profile` | Authenticated | Get current user profile |
 | `GET` | `/users/me` | Authenticated | Get current user |
 | `GET` | `/users/employer` | Employer | Employer-only test/profile endpoint |
+
+### AI
+
+| Method | Endpoint | Access | Description |
+| --- | --- | --- | --- |
+| `POST` | `/ai/job-match` | Seeker | Generate local AI match score for a job |
+| `POST` | `/ai/job-recommendations` | Seeker | Generate top local AI job recommendations |
+| `POST` | `/ai/cover-letter` | Seeker | Generate an editable cover letter |
+| `POST` | `/ai/application-summary` | Employer/Admin | Generate a local applicant summary |
+
+All AI endpoints require `Authorization: Bearer <jwt_token>`. Secret AI provider keys stay on the backend and are not exposed to the frontend.
 
 ### Jobs
 
@@ -734,6 +791,8 @@ VITE_API_URL=https://YOUR_BACKEND_URL
 # Render backend
 PORT=3000
 FRONTEND_URL=https://job-portal-system-neon.vercel.app
+AI_PROVIDER=
+AI_API_KEY=
 ```
 
 Recommended Render backend settings:
@@ -743,6 +802,12 @@ Root Directory: backend
 Build Command: npm install && npm run build
 Start Command: npm run start:prod
 ```
+
+AI deployment notes:
+
+- Vercel only needs `VITE_API_URL`; do not add `AI_API_KEY` to frontend environment variables.
+- Render or the backend host may include `AI_PROVIDER` and `AI_API_KEY` later when an external provider is integrated.
+- Leaving both AI variables empty is valid and keeps the local fallback enabled.
 
 Additional final submission documents:
 
