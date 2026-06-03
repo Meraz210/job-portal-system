@@ -10,4 +10,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   entities: [__dirname + '/**/*.entity{.ts,.js}'],
   synchronize: true,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
